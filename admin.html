@@ -757,7 +757,7 @@
 
         const recMap = {};
         (records || []).forEach(r => { recMap[r.user_id] = r; });
-
+        console.log('recMap:', recMap);
         const listEl = document.getElementById('presence-list');
         const countEl = document.getElementById('presence-count');
         const workingCount = (records||[]).filter(r => r.check_in_at && !r.check_out_at).length;
