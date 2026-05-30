@@ -835,7 +835,7 @@ return `
 
     const { data, error } = await AppCore.supabase
       .from('attendance')
-      .select('id, work_date, check_in_at, check_out_at, check_in_lat, check_in_lng, photo_url, user_id')
+      .select('id, work_date, check_in_at, check_out_at, check_in_lat, check_in_lng, check_in_photo_url, check_out_photo_url, user_id')
       .eq('work_date', currentDate)
       .order('check_in_at', { ascending: false });
 
