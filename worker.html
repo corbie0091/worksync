@@ -632,7 +632,7 @@
   // 업로드 전 리사이즈 (최대 1200px, 품질 0.75)
 let uploadFile = file;
 try {
-  const resized = await AppCore.resizeImage(file, 1200, 0.75);
+  const resized = await AppCore.resizeImage(file, 400, 0.3);
   uploadFile = new File([resized], file.name, { type: 'image/jpeg' });
 } catch (e) {
   console.warn('[worker] 리사이즈 실패, 원본 사용:', e);
