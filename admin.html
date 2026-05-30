@@ -751,7 +751,7 @@
 
         const { data: records, error: e2 } = await AppCore.supabase
           .from('attendance')
-          .select('user_id, check_in_at, check_out_at')
+          .select('id, user_id, check_in_at, check_out_at')
           .eq('work_date', today);
         if (e2) throw e2;
 
