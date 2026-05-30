@@ -226,6 +226,7 @@
           (blob) => {
             if (blob) {
               console.log('[resizeImage] 변환 완료:', blob.size, 'bytes, type:', blob.type);
+              if (typeof showToast === 'function') showToast(`압축완료: ${Math.round(blob.size/1024)}KB`, 'info', 5000);
               resolve(blob);
             } else {
               reject(new Error('이미지 변환에 실패했습니다.'));
