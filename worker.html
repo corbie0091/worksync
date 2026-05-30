@@ -626,7 +626,7 @@
 
     // ── 사진 Storage 업로드 ────────────────────
     async function uploadPhoto(file, userId, type) {
-  const ext  = file.name.split('.').pop() || 'jpg';
+  const ext = 'jpg';
   const date = new Date().toISOString().slice(0, 10);
   const path = `attendance/${userId}/${date}_${type}_${Date.now()}.${ext}`;
   // 업로드 전 리사이즈 (최대 1200px, 품질 0.75)
@@ -634,7 +634,7 @@ let uploadFile = file;
 try {
   const resized = await AppCore.resizeImage(file, 600, 0.4);
   console.log('원본 크기:', file.size, '리사이즈 후:', resized.size);
-  uploadFile = new File([resized], file.name, { type: 'image/jpeg' });
+  uploadFile = new File([resized], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' });
 } catch (e) {
   console.warn('[worker] 리사이즈 실패, 원본 사용:', e);
 }
