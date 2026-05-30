@@ -638,6 +638,7 @@ try {
 } catch (e) {
   console.warn('[worker] 리사이즈 실패, 원본 사용:', e);
 }
+  console.log('실제 업로드 파일 크기:', uploadFile.size, uploadFile.type);
   const { data, error } = await AppCore.supabase.storage
     .from('worksync-photos')
     .upload(path, file, {
