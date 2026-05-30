@@ -600,7 +600,7 @@
       photoInput.click();
     });
 
-    photoInput.addEventListener('change', async (e) => {
+    photoInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file) return;
 
@@ -609,32 +609,26 @@
         return;
       }
 
-      showToast('사진 압축 중...', 'info', 2000);
-
-      try {
-        const resized = await AppCore.resizeImage(file, 600, 0.4);
-        selectedFile = new File([resized], 'photo.jpg', { type: 'image/jpeg' });
-        showToast(`압축완료: ${Math.round(selectedFile.size/1024)}KB`, 'success', 3000);
-      } catch (e) {
-        console.warn('[worker] 사진 압축 실패, 원본 사용:', e);
-        selectedFile = file;
-        showToast('압축 실패, 원본 사용', 'error', 3000);
-      }
-
+      // 미리보기 먼저 표시
       const reader = new FileReader();
       reader.onload = (ev) => {
         photoPreview.src = ev.target.result;
         photoArea.classList.add('has-photo');
       };
-      reader.readAsDataURL(selectedFile);
-    });
+      reader.readAsDataURL(file);
 
-    photoRemove.addEventListener('click', (e) => {
-      e.stopPropagation();
-      selectedFile = null;
-      photoInput.value = '';
-      photoArea.classList.remove('has-photo');
-      photoPreview.src = '';
+      // 리사이즈는 별도로
+      showToast('사진 압축 중...', 'info', 2000);
+      AppCore.resizeImage(file, 600, 0.4)
+        .then((resized) => {
+          selectedFile = new File([resized], 'photo.jpg', { type: 'image/jpeg' });
+          showToast(`압축완료: ${Math.round(selectedFile.size / 1024)}KB`, 'success', 3000);
+        })
+        .catch((err) => {
+          console.warn('[worker] 압축 실패:', err);
+          selectedFile = file;
+          showToast('원본 사진으로 업로드됩니다.', 'info', 3000);
+        });
     });
 
     // ── 사진 Storage 업로드 ────────────────────
