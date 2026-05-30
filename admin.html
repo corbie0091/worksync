@@ -802,61 +802,72 @@
     document.getElementById('btn-load-attendance').addEventListener('click', loadAttendance);
 
     async function loadAttendance() {
-      const tbody = document.getElementById('attendance-tbody');
-      tbody.innerHTML = '<tr><td colspan="7" class="table-loading"><div class="spinner-sm"></div></td></tr>';
-      try {
-        const searchName = document.getElementById('search-worker').value.trim();
+  const tbody = document.getElementById('attendance-tbody');
+  tbody.innerHTML = '<tr><td colspan="7" class="table-loading"><div class="spinner-sm"></div></td></tr>';
+  try {
+    const searchName = document.getElementById('search-worker').value.trim();
 
-        let query = AppCore.supabase
-          .from('attendance')
-          .select(`
-            id, work_date, check_in_at, check_out_at,
-            check_in_lat, check_in_lng, photo_url,
-            users!attendance_user_id_fkey(name, email)
-          `)
-          .eq('work_date', currentDate)
-          .order('check_in_at', { ascending: false });
+    const { data, error } = await AppCore.supabase
+      .from('attendance')
+      .select('id, work_date, check_in_at, check_out_at, check_in_lat, check_in_lng, photo_url, user_id')
+      .eq('work_date', currentDate)
+      .order('check_in_at', { ascending: false });
 
-        const { data, error } = await query;
-        if (error) throw error;
+    if (error) throw error;
 
-        let rows = data || [];
-        if (searchName) {
-          rows = rows.filter(r => (r.users?.name||'').includes(searchName) || (r.users?.email||'').includes(searchName));
-        }
+    let rows = data || [];
 
-        if (rows.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="7" class="table-empty">해당 날짜의 출퇴근 기록이 없습니다.</td></tr>';
-          return;
-        }
-
-        tbody.innerHTML = rows.map(r => {
-          const ci = r.check_in_at, co = r.check_out_at;
-          let chipClass='in', chipText='출근만';
-          if (ci && co) { chipClass='out'; chipText='완료'; }
-          else if (!ci) { chipClass='part'; chipText='오류'; }
-
-          const dur = calcDuration(ci, co);
-          const photoHtml = r.photo_url
-            ? `<a href="${escHtml(r.photo_url)}" target="_blank" rel="noopener">보기 →</a>`
-            : '<span style="color:var(--text-muted);font-size:0.75rem">없음</span>';
-
-          return `<tr>
-            <td class="td-name">${escHtml(r.users?.name || '—')}</td>
-            <td class="td-time">${escHtml(r.work_date)}</td>
-            <td class="td-time">${fmtTime(ci)}</td>
-            <td class="td-time">${fmtTime(co)}</td>
-            <td>${dur}</td>
-            <td><span class="chip ${chipClass}">${chipText}</span></td>
-            <td class="td-photo">${photoHtml}</td>
-          </tr>`;
-        }).join('');
-      } catch (e) {
-        console.error('[admin] loadAttendance error:', e);
-        tbody.innerHTML = '<tr><td colspan="7" class="table-empty">데이터 로드에 실패했습니다.</td></tr>';
-        showToast('출퇴근 내역 로드 실패: ' + e.message);
-      }
+    // user_id 목록으로 users 별도 조회
+    const userIds = [...new Set(rows.map(r => r.user_id))];
+    let userMap = {};
+    if (userIds.length > 0) {
+      const { data: users } = await AppCore.supabase
+        .from('users')
+        .select('id, name, email')
+        .in('id', userIds);
+      (users || []).forEach(u => { userMap[u.id] = u; });
     }
+
+    if (searchName) {
+      rows = rows.filter(r => {
+        const u = userMap[r.user_id];
+        return (u?.name || '').includes(searchName) || (u?.email || '').includes(searchName);
+      });
+    }
+
+    if (rows.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="table-empty">해당 날짜의 출퇴근 기록이 없습니다.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = rows.map(r => {
+      const ci = r.check_in_at, co = r.check_out_at;
+      const u = userMap[r.user_id] || {};
+      let chipClass = 'in', chipText = '출근만';
+      if (ci && co) { chipClass = 'out'; chipText = '완료'; }
+      else if (!ci) { chipClass = 'part'; chipText = '오류'; }
+
+      const dur = calcDuration(ci, co);
+      const photoHtml = r.photo_url
+        ? `<a href="${escHtml(r.photo_url)}" target="_blank" rel="noopener">보기 →</a>`
+        : '<span style="color:var(--text-muted);font-size:0.75rem">없음</span>';
+
+      return `<tr>
+        <td class="td-name">${escHtml(u.name || '—')}</td>
+        <td class="td-time">${escHtml(r.work_date)}</td>
+        <td class="td-time">${fmtTime(ci)}</td>
+        <td class="td-time">${fmtTime(co)}</td>
+        <td>${dur}</td>
+        <td><span class="chip ${chipClass}">${chipText}</span></td>
+        <td class="td-photo">${photoHtml}</td>
+      </tr>`;
+    }).join('');
+  } catch (e) {
+    console.error('[admin] loadAttendance error:', e);
+    tbody.innerHTML = '<tr><td colspan="7" class="table-empty">데이터 로드에 실패했습니다.</td></tr>';
+    showToast('출퇴근 내역 로드 실패: ' + e.message);
+  }
+}
 
     // ── 직원 관리 ──────────────────────────────
     async function loadWorkers() {
