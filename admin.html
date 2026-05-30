@@ -969,9 +969,7 @@ const photoHtml2 = photoHtml; // 아래 참조용
         .replace(/>/g,'&gt;')
         .replace(/"/g,'&quot;');
     }
-
-    // ── 새로고침 ──────────────────────────────
-    document.addEventListener('click', async (e) => {
+document.addEventListener('click', async (e) => {
   const btn = e.target.closest('.btn-reset-attendance');
   if (!btn) return;
 
@@ -1000,6 +998,8 @@ const photoHtml2 = photoHtml; // 아래 참조용
     btn.textContent = '↩ 초기화';
   }
 });
+    // ── 새로고침 ──────────────────────────────
+    document.getElementById('btn-refresh-all').addEventListener('click', async () => {
       await loadDashboard();
       showToast('데이터가 새로고침되었습니다.', 'success');
     });
