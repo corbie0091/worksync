@@ -502,6 +502,26 @@
       0%, 100% { opacity: 1; }
       50% { opacity: 0.3; }
     }
+
+    .btn-reset-attendance {
+  padding: 0.25rem 0.625rem;
+  background: rgba(244, 63, 94, 0.1);
+  border: 1px solid rgba(244, 63, 94, 0.3);
+  border-radius: 8px;
+  font-size: 0.7rem;
+  color: #f43f5e;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+.btn-reset-attendance:hover {
+  background: rgba(244, 63, 94, 0.2);
+}
+.btn-reset-attendance:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
   </style>
 </head>
 <body>
@@ -761,14 +781,20 @@
             }
           }
           const avatarClass = badgeClass === 'working' ? 'working' : 'off';
-          return `
+          const resetBtn = rec
+  ? `<button class="btn-reset-attendance" data-id="${escHtml(rec.id)}" data-name="${escHtml(w.name)}">↩ 초기화</button>`
+  : '';
+return `
             <div class="presence-card">
               <div class="presence-avatar ${avatarClass}">${initials(w.name)}</div>
               <div class="presence-info">
                 <div class="presence-name">${escHtml(w.name || '이름없음')}</div>
                 <div class="presence-detail">${escHtml(detailText)}</div>
               </div>
-              <span class="presence-badge ${badgeClass}">${badgeText}</span>
+              <div style="display:flex;align-items:center;gap:0.5rem;">
+                <span class="presence-badge ${badgeClass}">${badgeText}</span>
+                ${resetBtn}
+              </div>
             </div>`;
         }).join('');
       } catch (e) {
@@ -861,7 +887,7 @@ const photoHtml2 = photoHtml; // 아래 참조용
         <td class="td-time">${fmtTime(co)}</td>
         <td>${dur}</td>
         <td><span class="chip ${chipClass}">${chipText}</span></td>
-        <td class="td-photo">${photoHtml}</td>
+        <td class="td-photo">${photoHtml2}</td>
       </tr>`;
     }).join('');
   } catch (e) {
@@ -945,7 +971,35 @@ const photoHtml2 = photoHtml; // 아래 참조용
     }
 
     // ── 새로고침 ──────────────────────────────
-    document.getElementById('btn-refresh-all').addEventListener('click', async () => {
+    document.addEventListener('click', async (e) => {
+  const btn = e.target.closest('.btn-reset-attendance');
+  if (!btn) return;
+
+  const id   = btn.dataset.id;
+  const name = btn.dataset.name;
+
+  if (!confirm(`${name}님의 오늘 출근 기록을 삭제하시겠습니까?\n삭제하면 다시 출근 버튼을 누를 수 있습니다.`)) return;
+
+  btn.disabled = true;
+  btn.textContent = '처리중...';
+
+  try {
+    const { error } = await AppCore.supabase
+      .from('attendance')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+
+    showToast(`${name}님 출근 기록이 초기화되었습니다.`, 'success');
+    await loadDashboard();
+  } catch (e) {
+    console.error('[admin] reset attendance error:', e);
+    showToast('초기화 실패: ' + e.message);
+    btn.disabled = false;
+    btn.textContent = '↩ 초기화';
+  }
+});
       await loadDashboard();
       showToast('데이터가 새로고침되었습니다.', 'success');
     });
