@@ -848,9 +848,11 @@
       else if (!ci) { chipClass = 'part'; chipText = '오류'; }
 
       const dur = calcDuration(ci, co);
-      const photoHtml = r.photo_url
-        ? `<a href="${escHtml(r.photo_url)}" target="_blank" rel="noopener">보기 →</a>`
-        : '<span style="color:var(--text-muted);font-size:0.75rem">없음</span>';
+      const photoHtml = [
+  r.check_in_photo_url  ? `<a href="${escHtml(r.check_in_photo_url)}"  target="_blank" rel="noopener">출근 →</a>` : '',
+  r.check_out_photo_url ? `<a href="${escHtml(r.check_out_photo_url)}" target="_blank" rel="noopener">퇴근 →</a>` : '',
+].filter(Boolean).join(' / ') || '<span style="color:var(--text-muted);font-size:0.75rem">없음</span>';
+const photoHtml2 = photoHtml; // 아래 참조용
 
       return `<tr>
         <td class="td-name">${escHtml(u.name || '—')}</td>

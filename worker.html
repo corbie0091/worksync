@@ -626,26 +626,26 @@
 
     // ── 사진 Storage 업로드 ────────────────────
     async function uploadPhoto(file, userId, type) {
-      const ext  = file.name.split('.').pop() || 'jpg';
-      const date = new Date().toISOString().slice(0, 10);
-      const path = `attendance/${userId}/${date}_${type}_${Date.now()}.${ext}`;
+  const ext  = file.name.split('.').pop() || 'jpg';
+  const date = new Date().toISOString().slice(0, 10);
+  const path = `attendance/${userId}/${date}_${type}_${Date.now()}.${ext}`;
 
-      const { data, error } = await AppCore.supabase.storage
-        .from('worksync-photos') // 버킷명은 실제 환경에 맞게 수정
-        .upload(path, file, {
-          cacheControl: '3600',
-          upsert: false,
-          contentType: file.type,
-        });
+  const { data, error } = await AppCore.supabase.storage
+    .from('worksync-photos')
+    .upload(path, file, {
+      cacheControl: '3600',
+      upsert: false,
+      contentType: file.type,
+    });
 
-      if (error) throw new Error(`사진 업로드 실패: ${error.message}`);
+  if (error) throw new Error(`사진 업로드 실패: ${error.message}`);
 
-      const { data: urlData } = AppCore.supabase.storage
-        .from('worksync-photos')
-        .getPublicUrl(data.path);
+  const { data: urlData } = AppCore.supabase.storage
+    .from('worksync-photos')
+    .getPublicUrl(data.path);
 
-      return urlData.publicUrl;
-    }
+  return urlData.publicUrl;
+}
 
     // ── 오늘 기록 불러오기 ────────────────────
     async function loadTodayRecord() {
@@ -773,12 +773,12 @@
           const { error } = await AppCore.supabase
             .from('attendance')
             .insert({
-              user_id:      session.user.id,
-              work_date:    today,
-              check_in_at:  new Date().toISOString(),
-              check_in_lat: currentLat,
-              check_in_lng: currentLng,
-              photo_url:    photoUrl,
+              user_id:            session.user.id,
+              work_date:          today,
+              check_in_at:        new Date().toISOString(),
+              check_in_lat:       currentLat,
+              check_in_lng:       currentLng,
+              check_in_photo_url: photoUrl,
             });
 
           if (error) throw new Error(error.message);
@@ -786,11 +786,11 @@
         } else {
           // ── 퇴근 ──
           const updates = {
-            check_out_at:  new Date().toISOString(),
-            check_out_lat: currentLat,
-            check_out_lng: currentLng,
+            check_out_at:        new Date().toISOString(),
+            check_out_lat:       currentLat,
+            check_out_lng:       currentLng,
+            check_out_photo_url: photoUrl,
           };
-          if (photoUrl) updates.photo_url = photoUrl;
 
           const { error } = await AppCore.supabase
             .from('attendance')
