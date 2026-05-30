@@ -431,7 +431,7 @@
         <span class="btn-checkin-icon" id="checkin-icon">🟢</span>
         <span id="checkin-label">출근</span>
       </button>
-      <div class="checkin-hint" id="checkin-hint">버튼을 눌러 출근을 기록하세요</div>
+      <div class="checkin-hint" id="checkin-hint">사진 촬영 후 출근 버튼을 눌러주세요</div>
     </div>
 
     <!-- GPS -->
@@ -454,8 +454,8 @@
         <input type="file" id="photo-input" accept="image/*" capture="environment" />
         <div class="photo-placeholder">
           <div class="photo-upload-icon">📷</div>
-          <div class="photo-upload-text">사진을 탭하여 업로드</div>
-          <div class="photo-upload-sub">카메라 또는 갤러리에서 선택</div>
+         <div class="photo-upload-text">사진 필수 📷</div>
+          <div class="photo-upload-sub">출퇴근 전 반드시 현장 사진을 찍어주세요</div>
         </div>
         <img class="photo-preview" id="photo-preview" alt="현장 사진" />
         <button class="photo-remove" id="photo-remove">✕</button>
@@ -731,7 +731,7 @@
         btn.disabled   = false;
         icon.textContent  = '🔴';
         label.textContent = '퇴근';
-        hint.textContent  = '버튼을 눌러 퇴근을 기록하세요';
+        hint.textContent  = '사진 촬영 후 퇴근 버튼을 눌러주세요';
         badge.className = 'status-badge on';
         btext.textContent = '근무 중';
       } else {
@@ -739,7 +739,7 @@
         btn.disabled   = false;
         icon.textContent  = '🟢';
         label.textContent = '출근';
-        hint.textContent  = '버튼을 눌러 출근을 기록하세요';
+        hint.textContent  = '사진 촬영 후 출근 버튼을 눌러주세요';
         badge.className = 'status-badge off';
         btext.textContent = '퇴근 상태';
       }
@@ -748,6 +748,13 @@
     // ── 체크인/아웃 처리 ──────────────────────
     document.getElementById('btn-checkin').addEventListener('click', async () => {
       const btn = document.getElementById('btn-checkin');
+
+      // 사진 필수 체크
+      if (!selectedFile) {
+        showToast('사진을 먼저 찍어주세요. 📷', 'error', 3000);
+        return;
+      }
+
       btn.disabled = true;
 
       try {
