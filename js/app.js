@@ -182,28 +182,53 @@
    * @param {number} quality - JPEG 품질 (기본 0.82)
    * @returns {Promise<Blob>}
    */
-  function resizeImage(file, maxPx = 1200, quality = 0.82) {
+  function resizeImage(file, maxPx = 800, quality = 0.5) {
     return new Promise((resolve, reject) => {
       const img = new Image();
       const url = URL.createObjectURL(file);
       img.onload = () => {
         URL.revokeObjectURL(url);
         let { width, height } = img;
+
+        // 리사이즈 계산
         if (width > maxPx || height > maxPx) {
-          if (width >= height) { height = Math.round(height * maxPx / width); width = maxPx; }
-          else                 { width  = Math.round(width  * maxPx / height); height = maxPx; }
+          if (width >= height) {
+            height = Math.round(height * maxPx / width);
+            width = maxPx;
+          } else {
+            width = Math.round(width * maxPx / height);
+            height = maxPx;
+          }
         }
+
         const canvas = document.createElement('canvas');
-        canvas.width = width; canvas.height = height;
+        canvas.width = width;
+        canvas.height = height;
         const ctx = canvas.getContext('2d');
+
+        // 흰 배경 (PNG 투명 처리)
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, width, height);
         ctx.drawImage(img, 0, 0, width, height);
+
+        // 무조건 JPEG로 변환
         canvas.toBlob(
-          (blob) => blob ? resolve(blob) : reject(new Error('이미지 변환에 실패했습니다.')),
+          (blob) => {
+            if (blob) {
+              console.log('[resizeImage] 변환 완료:', blob.size, 'bytes, type:', blob.type);
+              resolve(blob);
+            } else {
+              reject(new Error('이미지 변환에 실패했습니다.'));
+            }
+          },
           'image/jpeg',
           quality
         );
       };
-      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('이미지 로드에 실패했습니다.')); };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(new Error('이미지 로드에 실패했습니다.'));
+      };
       img.src = url;
     });
   }
