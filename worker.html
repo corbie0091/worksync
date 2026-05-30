@@ -600,21 +600,33 @@
       photoInput.click();
     });
 
-    photoInput.addEventListener('change', (e) => {
+    photoInput.addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
 
-      if (file.size > 10 * 1024 * 1024) {
-        showToast('10MB 이하 파일만 업로드 가능합니다.', 'error');
+      if (file.size > 30 * 1024 * 1024) {
+        showToast('30MB 이하 파일만 업로드 가능합니다.', 'error');
         return;
       }
-      selectedFile = file;
+
+      showToast('사진 압축 중...', 'info', 2000);
+
+      try {
+        const resized = await AppCore.resizeImage(file, 600, 0.4);
+        selectedFile = new File([resized], 'photo.jpg', { type: 'image/jpeg' });
+        showToast(`압축완료: ${Math.round(selectedFile.size/1024)}KB`, 'success', 3000);
+      } catch (e) {
+        console.warn('[worker] 사진 압축 실패, 원본 사용:', e);
+        selectedFile = file;
+        showToast('압축 실패, 원본 사용', 'error', 3000);
+      }
+
       const reader = new FileReader();
       reader.onload = (ev) => {
         photoPreview.src = ev.target.result;
         photoArea.classList.add('has-photo');
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(selectedFile);
     });
 
     photoRemove.addEventListener('click', (e) => {
