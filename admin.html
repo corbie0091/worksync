@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0f1e" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="WorkSync Admin" />
+  <title>WorkSync — 관리자</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    body { min-height: 100dvh; display: flex; flex-direction: column; }
+
+    /* ── 헤더 ── */
+    .a-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: max(1rem, env(safe-area-inset-top)) 1.5rem 1rem;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(20px);
+    }
+    .a-header-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .a-header-logo {
+      width: 40px; height: 40px;
+      background: var(--accent-gradient);
+      border-radius: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+    }
+    .a-header-titles { display: flex; flex-direction: column; }
+    .a-header-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+    }
+    .a-header-sub {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .a-header-right { display: flex; align-items: center; gap: 0.75rem; }
+    .btn-icon {
+      width: 36px; height: 36px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 1rem;
+      transition: background 0.2s;
+      text-decoration: none;
+    }
+    .btn-icon:hover { background: var(--border); }
+
+    /* ── 탭 바 ── */
+    .tab-bar {
+      display: flex;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      padding: 0 1.5rem;
+      gap: 0;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .tab-bar::-webkit-scrollbar { display: none; }
+    .tab-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.875rem 1.125rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      border: none;
+      background: none;
+      cursor: pointer;
+      white-space: nowrap;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: color 0.2s, border-color 0.2s;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .tab-btn.active {
+      color: var(--accent-blue);
+      border-bottom-color: var(--accent-blue);
+    }
+
+    /* ── 컨텐츠 ── */
+    .a-content {
+      flex: 1;
+      padding: 1.5rem;
+      max-width: 960px;
+      margin: 0 auto;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    /* 탭 패널 */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── 통계 카드 ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.875rem;
+      margin-bottom: 1.5rem;
+    }
+    @media (min-width: 600px) { .stats-grid { grid-template-columns: repeat(4, 1fr); } }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.25rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-card-icon {
+      font-size: 1.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .stat-card-val {
+      font-family: 'Syne', sans-serif;
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: -0.03em;
+      line-height: 1;
+    }
+    .stat-card-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.375rem;
+    }
+    .stat-card.highlight {
+      background: linear-gradient(135deg, rgba(99,179,237,0.12), rgba(56,189,248,0.06));
+      border-color: rgba(99,179,237,0.3);
+    }
+    .stat-card.highlight .stat-card-val { color: var(--accent-blue); }
+
+    /* ── 섹션 헤더 ── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .section-badge {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.625rem;
+      background: rgba(99,179,237,0.12);
+      color: var(--accent-blue);
+      border-radius: 100px;
+    }
+
+    /* ── 현황 카드 ── */
+    .presence-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .presence-card {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 0.875rem 1rem;
+      transition: border-color 0.2s;
+    }
+    .presence-card:hover { border-color: rgba(99,179,237,0.3); }
+    .presence-avatar {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+      font-weight: 700;
+      font-family: 'Syne', sans-serif;
+    }
+    .presence-avatar.working {
+      background: rgba(52, 211, 153, 0.15);
+      color: #34d399;
+    }
+    .presence-avatar.off {
+      background: var(--bg-input);
+      color: var(--text-muted);
+    }
+    .presence-info { flex: 1; min-width: 0; }
+    .presence-name {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .presence-detail {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.125rem;
+    }
+    .presence-badge {
+      padding: 0.25rem 0.625rem;
+      border-radius: 100px;
+      font-size: 0.7rem;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .presence-badge.working {
+      background: rgba(52, 211, 153, 0.12);
+      color: #34d399;
+    }
+    .presence-badge.off {
+      background: rgba(148, 163, 184, 0.1);
+      color: var(--text-muted);
+    }
+    .presence-badge.done {
+      background: rgba(99,179,237,0.12);
+      color: var(--accent-blue);
+    }
+
+    /* ── 출퇴근 내역 테이블 ── */
+    .table-wrap {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .table-filter {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .filter-input {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.85rem;
+      color: var(--text-primary);
+      font-family: 'DM Sans', sans-serif;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .filter-input:focus { outline: none; border-color: var(--accent-blue); }
+    .filter-label { font-size: 0.8rem; color: var(--text-muted); }
+    .table-scroll { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      min-width: 560px;
+    }
+    thead tr { background: var(--bg-input); }
+    th {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      white-space: nowrap;
+    }
+    td {
+      padding: 0.875rem 1rem;
+      color: var(--text-secondary);
+      border-top: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    tr:hover td { background: rgba(99,179,237,0.03); }
+    .td-name { color: var(--text-primary); font-weight: 500; }
+    .td-time { font-family: 'DM Sans', monospace; color: var(--text-secondary); }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.2rem 0.5rem;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      font-weight: 500;
+    }
+    .chip.in   { background: rgba(52,211,153,0.12); color: #34d399; }
+    .chip.out  { background: rgba(99,179,237,0.12); color: var(--accent-blue); }
+    .chip.part { background: rgba(251,191,36,0.12); color: #fbbf24; }
+    .td-photo a {
+      color: var(--accent-blue);
+      text-decoration: none;
+      font-size: 0.75rem;
+    }
+    .td-photo a:hover { text-decoration: underline; }
+    .table-empty {
+      padding: 2.5rem;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+    .table-loading {
+      padding: 2rem;
+      text-align: center;
+      color: var(--text-muted);
+    }
+    .spinner-sm {
+      display: inline-block;
+      width: 20px; height: 20px;
+      border: 2px solid rgba(99,179,237,0.2);
+      border-top-color: var(--accent-blue);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── 직원 목록 ── */
+    .worker-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 0.875rem;
+    }
+    .worker-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.25rem;
+      display: flex;
+      gap: 1rem;
+      align-items: flex-start;
+      transition: border-color 0.2s;
+    }
+    .worker-card:hover { border-color: rgba(99,179,237,0.3); }
+    .worker-avatar {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: var(--accent-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1.1rem;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .worker-info { flex: 1; min-width: 0; }
+    .worker-name {
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: var(--text-primary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .worker-email {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.125rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .worker-stats {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 0.75rem;
+    }
+    .worker-stat {
+      display: flex;
+      flex-direction: column;
+      gap: 0.125rem;
+    }
+    .worker-stat-val {
+      font-family: 'Syne', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .worker-stat-label {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    /* ── 날짜 탐색 ── */
+    .date-nav {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .date-nav button {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      width: 32px; height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+    .date-nav button:hover { background: var(--border); }
+    .date-nav-label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      min-width: 120px;
+      text-align: center;
+    }
+
+    /* ── 새로고침 ── */
+    .btn-refresh {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.5rem 0.875rem;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      transition: background 0.2s;
+    }
+    .btn-refresh:hover { background: var(--border); }
+
+    /* ── 토스트 ── */
+    .toast-container {
+      position: fixed;
+      bottom: max(1.5rem, env(safe-area-inset-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9999;
+      pointer-events: none;
+      width: calc(100% - 3rem);
+      max-width: 360px;
+    }
+    .toast {
+      padding: 0.875rem 1.25rem;
+      border-radius: 12px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #fff;
+      text-align: center;
+      animation: toastIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      pointer-events: auto;
+    }
+    .toast.error { background: rgba(244,63,94,0.95); }
+    .toast.success { background: rgba(52,211,153,0.95); color: #022c22; }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(12px) scale(0.95); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* ── 실시간 도트 ── */
+    .realtime-dot {
+      width: 7px; height: 7px;
+      background: #34d399;
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 0 6px #34d399;
+      animation: pulse 2s infinite;
+      margin-left: 0.375rem;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+  </style>
+</head>
+<body>
+  <!-- 헤더 -->
+  <header class="a-header">
+    <div class="a-header-brand">
+      <div class="a-header-logo">⚡</div>
+      <div class="a-header-titles">
+        <div class="a-header-title">WorkSync</div>
+        <div class="a-header-sub">Admin Dashboard</div>
+      </div>
+    </div>
+    <div class="a-header-right">
+      <button class="btn-icon" id="btn-refresh-all" title="새로고침">↻</button>
+      <button class="btn-icon" id="btn-logout" title="로그아웃">↩</button>
+    </div>
+  </header>
+
+  <!-- 탭 바 -->
+  <nav class="tab-bar" id="tab-bar">
+    <button class="tab-btn active" data-tab="dashboard">📊 대시보드</button>
+    <button class="tab-btn" data-tab="attendance">🗓 출퇴근 내역</button>
+    <button class="tab-btn" data-tab="workers">👥 직원 관리</button>
+  </nav>
+
+  <!-- 콘텐츠 -->
+  <div class="a-content">
+
+    <!-- ── 대시보드 탭 ── -->
+    <div class="tab-panel active" id="panel-dashboard">
+      <!-- 통계 -->
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card highlight">
+          <div class="stat-card-icon">🟢</div>
+          <div class="stat-card-val" id="stat-working">—</div>
+          <div class="stat-card-label">현재 근무중</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon">👥</div>
+          <div class="stat-card-val" id="stat-total">—</div>
+          <div class="stat-card-label">전체 직원</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon">✅</div>
+          <div class="stat-card-val" id="stat-done">—</div>
+          <div class="stat-card-label">오늘 퇴근 완료</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon">❌</div>
+          <div class="stat-card-val" id="stat-absent">—</div>
+          <div class="stat-card-label">오늘 미출근</div>
+        </div>
+      </div>
+
+      <!-- 현재 근무 현황 -->
+      <div class="section-header">
+        <span class="section-title">실시간 근무 현황 <span class="realtime-dot"></span></span>
+        <span class="section-badge" id="presence-count">0명</span>
+      </div>
+      <div class="presence-list" id="presence-list">
+        <div class="table-loading"><div class="spinner-sm"></div></div>
+      </div>
+    </div>
+
+    <!-- ── 출퇴근 내역 탭 ── -->
+    <div class="tab-panel" id="panel-attendance">
+      <div class="section-header" style="margin-bottom:1rem;">
+        <span class="section-title">출퇴근 내역</span>
+        <div class="date-nav">
+          <button id="btn-date-prev">←</button>
+          <span class="date-nav-label" id="date-nav-label">—</span>
+          <button id="btn-date-next">→</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <div class="table-filter">
+          <span class="filter-label">검색:</span>
+          <input type="text" class="filter-input" id="search-worker" placeholder="직원 이름" />
+          <button class="btn-refresh" id="btn-load-attendance">🔍 조회</button>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>이름</th>
+                <th>날짜</th>
+                <th>출근</th>
+                <th>퇴근</th>
+                <th>근무시간</th>
+                <th>상태</th>
+                <th>사진</th>
+              </tr>
+            </thead>
+            <tbody id="attendance-tbody">
+              <tr><td colspan="7" class="table-loading"><div class="spinner-sm"></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 직원 관리 탭 ── -->
+    <div class="tab-panel" id="panel-workers">
+      <div class="section-header">
+        <span class="section-title">직원 목록</span>
+        <button class="btn-refresh" id="btn-load-workers">↻ 새로고침</button>
+      </div>
+      <div class="worker-grid" id="worker-grid">
+        <div class="table-loading"><div class="spinner-sm"></div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 토스트 -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+  (async () => {
+    'use strict';
+
+    // ── 인증 가드 ──────────────────────────────
+    const session = await AppCore.getSession();
+    if (!session) { window.location.replace('login.html'); return; }
+
+    const { data: profile, error: profileErr } = await AppCore.supabase
+      .from('users')
+      .select('role, name')
+      .eq('id', session.user.id)
+      .single();
+
+    if (profileErr || !profile || profile.role !== 'admin') {
+      await AppCore.supabase.auth.signOut();
+      window.location.replace('login.html');
+      return;
+    }
+
+    // ── 유틸 ──────────────────────────────────
+    function showToast(msg, type = 'error') {
+      const container = document.getElementById('toast-container');
+      const el = document.createElement('div');
+      el.className = `toast ${type}`;
+      el.textContent = msg;
+      container.appendChild(el);
+      setTimeout(() => { el.style.opacity='0'; el.style.transition='opacity 0.3s'; setTimeout(()=>el.remove(),300); }, 3500);
+    }
+
+    function fmtTime(iso) {
+      if (!iso) return '—';
+      return new Date(iso).toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit', hour12:true });
+    }
+    function fmtDate(iso) {
+      if (!iso) return '—';
+      const d = new Date(iso);
+      return `${d.getMonth()+1}/${d.getDate()}`;
+    }
+    function calcDuration(inT, outT) {
+      if (!inT || !outT) return '—';
+      const diff = Math.floor((new Date(outT)-new Date(inT))/1000);
+      const h=Math.floor(diff/3600), m=Math.floor((diff%3600)/60);
+      return `${h}h ${m}m`;
+    }
+    function initials(name='') {
+      return (name.trim().slice(0,1) || '?').toUpperCase();
+    }
+
+    // ── 탭 ───────────────────────────────────
+    const tabs = document.querySelectorAll('.tab-btn');
+    const panels = document.querySelectorAll('.tab-panel');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        panels.forEach(p => p.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(`panel-${tab.dataset.tab}`).classList.add('active');
+        if (tab.dataset.tab === 'attendance') loadAttendance();
+        if (tab.dataset.tab === 'workers') loadWorkers();
+      });
+    });
+
+    // ── 대시보드 ──────────────────────────────
+    async function loadDashboard() {
+      try {
+        const today = new Date().toISOString().slice(0, 10);
+
+        // 전체 직원 수 (worker role만)
+        const { count: totalWorkers, error: e1 } = await AppCore.supabase
+          .from('users')
+          .select('id', { count: 'exact', head: true })
+          .eq('role', 'worker');
+        if (e1) throw e1;
+
+        // 오늘 출퇴근 기록 전체
+        const { data: todayRecords, error: e2 } = await AppCore.supabase
+          .from('attendance')
+          .select('user_id, check_in_at, check_out_at')
+          .eq('work_date', today);
+        if (e2) throw e2;
+
+        const working = todayRecords.filter(r => r.check_in_at && !r.check_out_at).length;
+        const done    = todayRecords.filter(r => r.check_out_at).length;
+        const absent  = (totalWorkers || 0) - todayRecords.length;
+
+        document.getElementById('stat-working').textContent = working;
+        document.getElementById('stat-total').textContent   = totalWorkers || 0;
+        document.getElementById('stat-done').textContent    = done;
+        document.getElementById('stat-absent').textContent  = Math.max(0, absent);
+
+        await loadPresence(today);
+      } catch (e) {
+        console.error('[admin] loadDashboard error:', e);
+        showToast('대시보드 로드 실패: ' + e.message);
+      }
+    }
+
+    async function loadPresence(today) {
+      try {
+        const { data: workers, error: e1 } = await AppCore.supabase
+          .from('users')
+          .select('id, name, email')
+          .eq('role', 'worker')
+          .order('name');
+        if (e1) throw e1;
+
+        const { data: records, error: e2 } = await AppCore.supabase
+          .from('attendance')
+          .select('user_id, check_in_at, check_out_at')
+          .eq('work_date', today);
+        if (e2) throw e2;
+
+        const recMap = {};
+        (records || []).forEach(r => { recMap[r.user_id] = r; });
+
+        const listEl = document.getElementById('presence-list');
+        const countEl = document.getElementById('presence-count');
+        const workingCount = (records||[]).filter(r => r.check_in_at && !r.check_out_at).length;
+        countEl.textContent = `${workingCount}명 근무중`;
+
+        if (!workers || workers.length === 0) {
+          listEl.innerHTML = '<div class="table-empty">등록된 직원이 없습니다.</div>';
+          return;
+        }
+
+        listEl.innerHTML = workers.map(w => {
+          const rec = recMap[w.id];
+          let badgeClass = 'off', badgeText = '미출근', detailText = '오늘 출근 기록 없음';
+          if (rec) {
+            if (rec.check_out_at) {
+              badgeClass='done'; badgeText='퇴근';
+              detailText = `${fmtTime(rec.check_in_at)} → ${fmtTime(rec.check_out_at)}`;
+            } else if (rec.check_in_at) {
+              badgeClass='working'; badgeText='근무중';
+              detailText = `출근 ${fmtTime(rec.check_in_at)}`;
+            }
+          }
+          const avatarClass = badgeClass === 'working' ? 'working' : 'off';
+          return `
+            <div class="presence-card">
+              <div class="presence-avatar ${avatarClass}">${initials(w.name)}</div>
+              <div class="presence-info">
+                <div class="presence-name">${escHtml(w.name || '이름없음')}</div>
+                <div class="presence-detail">${escHtml(detailText)}</div>
+              </div>
+              <span class="presence-badge ${badgeClass}">${badgeText}</span>
+            </div>`;
+        }).join('');
+      } catch (e) {
+        console.error('[admin] loadPresence error:', e);
+        showToast('현황 로드 실패: ' + e.message);
+      }
+    }
+
+    // ── 출퇴근 내역 ────────────────────────────
+    let currentDate = new Date().toISOString().slice(0, 10);
+
+    function updateDateLabel() {
+      const d = new Date(currentDate + 'T00:00:00');
+      document.getElementById('date-nav-label').textContent =
+        `${d.getFullYear()}. ${d.getMonth()+1}. ${d.getDate()}`;
+    }
+    updateDateLabel();
+
+    document.getElementById('btn-date-prev').addEventListener('click', () => {
+      const d = new Date(currentDate); d.setDate(d.getDate()-1);
+      currentDate = d.toISOString().slice(0,10);
+      updateDateLabel();
+      loadAttendance();
+    });
+    document.getElementById('btn-date-next').addEventListener('click', () => {
+      const d = new Date(currentDate); d.setDate(d.getDate()+1);
+      currentDate = d.toISOString().slice(0,10);
+      updateDateLabel();
+      loadAttendance();
+    });
+    document.getElementById('btn-load-attendance').addEventListener('click', loadAttendance);
+
+    async function loadAttendance() {
+      const tbody = document.getElementById('attendance-tbody');
+      tbody.innerHTML = '<tr><td colspan="7" class="table-loading"><div class="spinner-sm"></div></td></tr>';
+      try {
+        const searchName = document.getElementById('search-worker').value.trim();
+
+        let query = AppCore.supabase
+          .from('attendance')
+          .select(`
+            id, work_date, check_in_at, check_out_at,
+            check_in_lat, check_in_lng, photo_url,
+            users!attendance_user_id_fkey(name, email)
+          `)
+          .eq('work_date', currentDate)
+          .order('check_in_at', { ascending: false });
+
+        const { data, error } = await query;
+        if (error) throw error;
+
+        let rows = data || [];
+        if (searchName) {
+          rows = rows.filter(r => (r.users?.name||'').includes(searchName) || (r.users?.email||'').includes(searchName));
+        }
+
+        if (rows.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" class="table-empty">해당 날짜의 출퇴근 기록이 없습니다.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = rows.map(r => {
+          const ci = r.check_in_at, co = r.check_out_at;
+          let chipClass='in', chipText='출근만';
+          if (ci && co) { chipClass='out'; chipText='완료'; }
+          else if (!ci) { chipClass='part'; chipText='오류'; }
+
+          const dur = calcDuration(ci, co);
+          const photoHtml = r.photo_url
+            ? `<a href="${escHtml(r.photo_url)}" target="_blank" rel="noopener">보기 →</a>`
+            : '<span style="color:var(--text-muted);font-size:0.75rem">없음</span>';
+
+          return `<tr>
+            <td class="td-name">${escHtml(r.users?.name || '—')}</td>
+            <td class="td-time">${escHtml(r.work_date)}</td>
+            <td class="td-time">${fmtTime(ci)}</td>
+            <td class="td-time">${fmtTime(co)}</td>
+            <td>${dur}</td>
+            <td><span class="chip ${chipClass}">${chipText}</span></td>
+            <td class="td-photo">${photoHtml}</td>
+          </tr>`;
+        }).join('');
+      } catch (e) {
+        console.error('[admin] loadAttendance error:', e);
+        tbody.innerHTML = '<tr><td colspan="7" class="table-empty">데이터 로드에 실패했습니다.</td></tr>';
+        showToast('출퇴근 내역 로드 실패: ' + e.message);
+      }
+    }
+
+    // ── 직원 관리 ──────────────────────────────
+    async function loadWorkers() {
+      const gridEl = document.getElementById('worker-grid');
+      gridEl.innerHTML = '<div class="table-loading"><div class="spinner-sm"></div></div>';
+      try {
+        const { data: workers, error } = await AppCore.supabase
+          .from('users')
+          .select('id, name, email, created_at')
+          .eq('role', 'worker')
+          .order('name');
+        if (error) throw error;
+
+        if (!workers || workers.length === 0) {
+          gridEl.innerHTML = '<div class="table-empty" style="grid-column:1/-1">등록된 직원이 없습니다.</div>';
+          return;
+        }
+
+        // 이번 달 출퇴근 횟수 조회
+        const thisMonth = new Date().toISOString().slice(0, 7);
+        const { data: monthRecs } = await AppCore.supabase
+          .from('attendance')
+          .select('user_id, check_out_at')
+          .gte('work_date', thisMonth + '-01');
+
+        const monthMap = {};
+        (monthRecs || []).forEach(r => {
+          if (!monthMap[r.user_id]) monthMap[r.user_id] = { total: 0, complete: 0 };
+          monthMap[r.user_id].total++;
+          if (r.check_out_at) monthMap[r.user_id].complete++;
+        });
+
+        gridEl.innerHTML = workers.map(w => {
+          const stat = monthMap[w.id] || { total: 0, complete: 0 };
+          const joinDate = new Date(w.created_at).toLocaleDateString('ko-KR', { year:'numeric', month:'short', day:'numeric' });
+          return `
+            <div class="worker-card">
+              <div class="worker-avatar">${initials(w.name)}</div>
+              <div class="worker-info">
+                <div class="worker-name">${escHtml(w.name || '이름없음')}</div>
+                <div class="worker-email">${escHtml(w.email || '—')}</div>
+                <div class="worker-stats">
+                  <div class="worker-stat">
+                    <span class="worker-stat-val">${stat.total}</span>
+                    <span class="worker-stat-label">이번달 출근</span>
+                  </div>
+                  <div class="worker-stat">
+                    <span class="worker-stat-val">${stat.complete}</span>
+                    <span class="worker-stat-label">완료</span>
+                  </div>
+                </div>
+                <div style="font-size:0.7rem;color:var(--text-muted);margin-top:0.5rem;">가입일: ${joinDate}</div>
+              </div>
+            </div>`;
+        }).join('');
+      } catch (e) {
+        console.error('[admin] loadWorkers error:', e);
+        gridEl.innerHTML = '<div class="table-empty">직원 데이터 로드에 실패했습니다.</div>';
+        showToast('직원 목록 로드 실패: ' + e.message);
+      }
+    }
+
+    document.getElementById('btn-load-workers').addEventListener('click', loadWorkers);
+
+    // ── XSS 방지 ──────────────────────────────
+    function escHtml(str) {
+      if (str == null) return '';
+      return String(str)
+        .replace(/&/g,'&amp;')
+        .replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;');
+    }
+
+    // ── 새로고침 ──────────────────────────────
+    document.getElementById('btn-refresh-all').addEventListener('click', async () => {
+      await loadDashboard();
+      showToast('데이터가 새로고침되었습니다.', 'success');
+    });
+
+    // ── 로그아웃 ──────────────────────────────
+    document.getElementById('btn-logout').addEventListener('click', async () => {
+      if (!confirm('로그아웃 하시겠습니까?')) return;
+      await AppCore.supabase.auth.signOut();
+      window.location.replace('login.html');
+    });
+
+    // ── 실시간 구독 (Supabase Realtime) ───────
+    const realtimeChannel = AppCore.supabase
+      .channel('attendance-changes')
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'attendance' },
+        () => { loadDashboard(); }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.info('[admin] realtime connected');
+        }
+      });
+
+    // 페이지 언마운트 시 구독 해제
+    window.addEventListener('beforeunload', () => {
+      AppCore.supabase.removeChannel(realtimeChannel);
+    });
+
+    // ── 초기 로드 ──────────────────────────────
+    await loadDashboard();
+
+  })();
+  </script>
+</body>
+</html>

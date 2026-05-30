@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0f1e" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="WorkSync" />
+  <title>로그인 — WorkSync</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    body {
+      min-height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      padding: max(1.5rem, env(safe-area-inset-top)) 1.5rem max(1.5rem, env(safe-area-inset-bottom));
+      overflow: hidden;
+    }
+
+    /* 배경 오브 */
+    .bg-orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.12;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .bg-orb-1 {
+      width: 400px; height: 400px;
+      background: var(--accent-blue);
+      top: -100px; left: -100px;
+      animation: orbFloat 8s ease-in-out infinite;
+    }
+    .bg-orb-2 {
+      width: 300px; height: 300px;
+      background: var(--accent-teal);
+      bottom: -80px; right: -80px;
+      animation: orbFloat 10s ease-in-out infinite reverse;
+    }
+    @keyframes orbFloat {
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(20px, -20px); }
+    }
+
+    .login-container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 420px;
+      animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+    .login-logo {
+      width: 64px; height: 64px;
+      background: var(--accent-gradient);
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.75rem;
+      margin: 0 auto 1.25rem;
+      box-shadow: 0 0 40px rgba(99, 179, 237, 0.25);
+    }
+    .login-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: -0.03em;
+      line-height: 1;
+    }
+    .login-subtitle {
+      margin-top: 0.5rem;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      font-weight: 300;
+    }
+
+    .login-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2rem;
+      backdrop-filter: blur(20px);
+    }
+
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+    .form-label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.5rem;
+    }
+    .form-input {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.875rem 1rem;
+      font-size: 1rem;
+      color: var(--text-primary);
+      font-family: 'DM Sans', sans-serif;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      -webkit-appearance: none;
+      appearance: none;
+      box-sizing: border-box;
+    }
+    .form-input:focus {
+      outline: none;
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 3px rgba(99, 179, 237, 0.15);
+    }
+    .form-input::placeholder { color: var(--text-muted); }
+
+    .btn-login {
+      width: 100%;
+      padding: 0.9375rem;
+      background: var(--accent-gradient);
+      border: none;
+      border-radius: 12px;
+      font-family: 'Syne', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      cursor: pointer;
+      margin-top: 0.5rem;
+      position: relative;
+      overflow: hidden;
+      transition: opacity 0.2s, transform 0.15s;
+      letter-spacing: 0.02em;
+    }
+    .btn-login:hover { opacity: 0.92; }
+    .btn-login:active { transform: scale(0.98); }
+    .btn-login:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+    .btn-login .btn-text { transition: opacity 0.2s; }
+    .btn-login.loading .btn-text { opacity: 0; }
+    .btn-login .btn-spinner {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .btn-login.loading .btn-spinner { opacity: 1; }
+    .btn-spinner-inner {
+      width: 20px; height: 20px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-msg {
+      display: none;
+      margin-top: 1rem;
+      padding: 0.75rem 1rem;
+      background: rgba(252, 129, 74, 0.12);
+      border: 1px solid rgba(252, 129, 74, 0.3);
+      border-radius: 10px;
+      font-size: 0.875rem;
+      color: #fc814a;
+      text-align: center;
+    }
+    .error-msg.show { display: block; }
+
+    .login-footer {
+      text-align: center;
+      margin-top: 1.5rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-orb bg-orb-1"></div>
+  <div class="bg-orb bg-orb-2"></div>
+
+  <div class="login-container">
+    <div class="login-header">
+      <div class="login-logo">⚡</div>
+      <div class="login-title">WorkSync</div>
+      <div class="login-subtitle">현장 근무 관리 플랫폼</div>
+    </div>
+
+    <div class="login-card">
+      <div class="form-group">
+        <label class="form-label" for="email">이메일</label>
+        <input
+          id="email"
+          type="email"
+          class="form-input"
+          placeholder="name@company.com"
+          autocomplete="email"
+          inputmode="email"
+          autofocus
+        />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="password">비밀번호</label>
+        <input
+          id="password"
+          type="password"
+          class="form-input"
+          placeholder="••••••••"
+          autocomplete="current-password"
+        />
+      </div>
+
+      <button class="btn-login" id="btn-login">
+        <span class="btn-text">로그인</span>
+        <span class="btn-spinner"><span class="btn-spinner-inner"></span></span>
+      </button>
+
+      <div class="error-msg" id="error-msg"></div>
+    </div>
+
+    <div class="login-footer">
+      계정 관련 문의는 관리자에게 문의하세요
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    (async () => {
+      // 이미 로그인된 경우 리다이렉트
+      const session = await AppCore.getSession();
+      if (session) {
+        window.location.replace('index.html');
+        return;
+      }
+    })();
+
+    const emailEl   = document.getElementById('email');
+    const passwordEl = document.getElementById('password');
+    const btnLogin  = document.getElementById('btn-login');
+    const errorMsg  = document.getElementById('error-msg');
+
+    function showError(msg) {
+      errorMsg.textContent = msg;
+      errorMsg.classList.add('show');
+    }
+    function hideError() {
+      errorMsg.classList.remove('show');
+    }
+    function setLoading(on) {
+      btnLogin.disabled = on;
+      btnLogin.classList.toggle('loading', on);
+    }
+
+    async function doLogin() {
+      hideError();
+      const email    = emailEl.value.trim();
+      const password = passwordEl.value;
+
+      if (!email || !password) {
+        showError('이메일과 비밀번호를 입력해주세요.');
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const { data, error } = await AppCore.supabase.auth.signInWithPassword({ email, password });
+
+        if (error) {
+          if (error.message.includes('Invalid login credentials')) {
+            showError('이메일 또는 비밀번호가 올바르지 않습니다.');
+          } else if (error.message.includes('Email not confirmed')) {
+            showError('이메일 인증이 필요합니다. 메일함을 확인해주세요.');
+          } else {
+            showError('로그인에 실패했습니다. 잠시 후 다시 시도해주세요.');
+          }
+          return;
+        }
+
+        // role 확인 후 라우팅
+        const { data: profile, error: profileError } = await AppCore.supabase
+          .from('users')
+          .select('role, name')
+          .eq('id', data.user.id)
+          .single();
+
+        if (profileError || !profile) {
+          await AppCore.supabase.auth.signOut();
+          showError('계정 정보를 불러올 수 없습니다. 관리자에게 문의하세요.');
+          return;
+        }
+
+        if (profile.role === 'admin') {
+          window.location.replace('admin.html');
+        } else if (profile.role === 'worker') {
+          window.location.replace('worker.html');
+        } else {
+          await AppCore.supabase.auth.signOut();
+          showError('접근 권한이 없는 계정입니다.');
+        }
+      } catch (e) {
+        console.error('[login] unexpected error:', e);
+        showError('예기치 않은 오류가 발생했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    btnLogin.addEventListener('click', doLogin);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') doLogin();
+    });
+  </script>
+</body>
+</html>

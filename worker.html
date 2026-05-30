@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0f1e" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="WorkSync" />
+  <title>WorkSync — 현장</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    body {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    /* ── 헤더 ── */
+    .w-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: max(1rem, env(safe-area-inset-top)) 1.25rem 1rem;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(20px);
+    }
+    .w-header-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+    }
+    .w-header-logo {
+      width: 36px; height: 36px;
+      background: var(--accent-gradient);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+    }
+    .w-header-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .w-header-user {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .w-header-name {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      max-width: 100px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .btn-icon {
+      width: 36px; height: 36px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 1rem;
+      transition: background 0.2s;
+    }
+    .btn-icon:hover { background: var(--border); }
+
+    /* ── 메인 콘텐츠 ── */
+    .w-main {
+      flex: 1;
+      padding: 1.5rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      max-width: 480px;
+      margin: 0 auto;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    /* ── 시계 카드 ── */
+    .clock-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 1.75rem 1.5rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .clock-card::before {
+      content: '';
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 180px; height: 180px;
+      background: var(--accent-blue);
+      border-radius: 50%;
+      opacity: 0.05;
+      pointer-events: none;
+    }
+    .clock-date {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.5rem;
+    }
+    .clock-time {
+      font-family: 'Syne', sans-serif;
+      font-size: 3.5rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: -0.03em;
+      line-height: 1;
+      margin-bottom: 1.25rem;
+    }
+
+    /* 상태 뱃지 */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.375rem 0.875rem;
+      border-radius: 100px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+    .status-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .status-badge.off {
+      background: rgba(148, 163, 184, 0.1);
+      color: var(--text-muted);
+    }
+    .status-badge.off .status-dot { background: var(--text-muted); }
+    .status-badge.on {
+      background: rgba(52, 211, 153, 0.12);
+      color: #34d399;
+    }
+    .status-badge.on .status-dot {
+      background: #34d399;
+      box-shadow: 0 0 6px #34d399;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* ── 체크인 버튼 ── */
+    .checkin-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+    .btn-checkin {
+      width: 160px; height: 160px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      font-family: 'Syne', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      position: relative;
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-checkin:active { transform: scale(0.94); }
+    .btn-checkin:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .btn-checkin.check-in {
+      background: var(--accent-gradient);
+      color: #fff;
+      box-shadow: 0 8px 40px rgba(99, 179, 237, 0.35);
+    }
+    .btn-checkin.check-out {
+      background: linear-gradient(135deg, #fc814a, #f43f5e);
+      color: #fff;
+      box-shadow: 0 8px 40px rgba(244, 63, 94, 0.35);
+    }
+    .btn-checkin-icon { font-size: 2.5rem; }
+    .btn-checkin-ring {
+      position: absolute;
+      inset: -8px;
+      border-radius: 50%;
+      border: 2px solid;
+      opacity: 0.3;
+    }
+    .check-in .btn-checkin-ring { border-color: var(--accent-blue); animation: ringExpand 2s ease-out infinite; }
+    .check-out .btn-checkin-ring { border-color: #f43f5e; }
+    @keyframes ringExpand {
+      0% { transform: scale(1); opacity: 0.3; }
+      100% { transform: scale(1.3); opacity: 0; }
+    }
+
+    .checkin-hint {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    /* ── GPS 카드 ── */
+    .info-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.25rem;
+    }
+    .info-card-label {
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .gps-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+    .gps-coords {
+      font-family: 'DM Sans', monospace;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+    .gps-coords span { display: block; }
+    .btn-refresh-gps {
+      padding: 0.5rem 0.875rem;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+    .btn-refresh-gps:hover { background: var(--border); }
+    .gps-status {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+    }
+    .gps-status.ok { color: #34d399; }
+    .gps-status.err { color: #fc814a; }
+
+    /* ── 사진 업로드 ── */
+    .photo-upload-area {
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+    .photo-upload-area:hover {
+      border-color: var(--accent-blue);
+      background: rgba(99, 179, 237, 0.04);
+    }
+    .photo-upload-area.has-photo {
+      border-style: solid;
+      border-color: var(--accent-blue);
+      padding: 0;
+      overflow: hidden;
+    }
+    .photo-upload-icon { font-size: 1.75rem; margin-bottom: 0.5rem; }
+    .photo-upload-text {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.25rem;
+    }
+    .photo-upload-sub {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    #photo-input { display: none; }
+    .photo-preview {
+      width: 100%;
+      max-height: 200px;
+      object-fit: cover;
+      display: none;
+      border-radius: 10px;
+    }
+    .photo-upload-area.has-photo .photo-preview { display: block; }
+    .photo-upload-area.has-photo .photo-placeholder { display: none; }
+    .photo-remove {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      background: rgba(0,0,0,0.6);
+      border: none;
+      border-radius: 50%;
+      width: 28px; height: 28px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .photo-upload-area.has-photo .photo-remove { display: flex; }
+
+    /* ── 오늘 기록 ── */
+    .today-log {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.25rem;
+    }
+    .log-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.625rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .log-row:last-child { border-bottom: none; }
+    .log-key {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .log-val {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      font-family: 'DM Sans', sans-serif;
+    }
+    .log-val.empty { color: var(--text-muted); font-weight: 400; font-style: italic; }
+
+    /* ── 토스트 ── */
+    .toast-container {
+      position: fixed;
+      bottom: max(1.5rem, env(safe-area-inset-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      pointer-events: none;
+      width: calc(100% - 3rem);
+      max-width: 360px;
+    }
+    .toast {
+      padding: 0.875rem 1.25rem;
+      border-radius: 12px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #fff;
+      text-align: center;
+      animation: toastIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      pointer-events: auto;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .toast.success { background: rgba(52, 211, 153, 0.95); color: #022c22; }
+    .toast.error   { background: rgba(244, 63, 94, 0.95); }
+    .toast.info    { background: rgba(99, 179, 237, 0.95); color: #0c1a2e; }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(12px) scale(0.95); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <!-- 헤더 -->
+  <header class="w-header">
+    <div class="w-header-brand">
+      <div class="w-header-logo">⚡</div>
+      <div class="w-header-title">WorkSync</div>
+    </div>
+    <div class="w-header-user">
+      <span class="w-header-name" id="user-name">로딩중...</span>
+      <button class="btn-icon" id="btn-logout" title="로그아웃">↩</button>
+    </div>
+  </header>
+
+  <!-- 메인 -->
+  <main class="w-main">
+    <!-- 시계 -->
+    <div class="clock-card">
+      <div class="clock-date" id="clock-date">---</div>
+      <div class="clock-time" id="clock-time">--:--:--</div>
+      <div>
+        <span class="status-badge off" id="status-badge">
+          <span class="status-dot"></span>
+          <span id="status-text">퇴근 상태</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- 체크인/아웃 버튼 -->
+    <div class="checkin-section">
+      <button class="btn-checkin check-in" id="btn-checkin">
+        <div class="btn-checkin-ring"></div>
+        <span class="btn-checkin-icon" id="checkin-icon">🟢</span>
+        <span id="checkin-label">출근</span>
+      </button>
+      <div class="checkin-hint" id="checkin-hint">버튼을 눌러 출근을 기록하세요</div>
+    </div>
+
+    <!-- GPS -->
+    <div class="info-card">
+      <div class="info-card-label">📍 현재 위치</div>
+      <div class="gps-row">
+        <div class="gps-coords">
+          <span id="gps-lat">위도: —</span>
+          <span id="gps-lng">경도: —</span>
+        </div>
+        <button class="btn-refresh-gps" id="btn-get-gps">위치 가져오기</button>
+      </div>
+      <div class="gps-status" id="gps-status">위치 권한을 허용해주세요</div>
+    </div>
+
+    <!-- 사진 업로드 -->
+    <div class="info-card">
+      <div class="info-card-label">📷 현장 사진 (선택)</div>
+      <div class="photo-upload-area" id="photo-upload-area">
+        <input type="file" id="photo-input" accept="image/*" capture="environment" />
+        <div class="photo-placeholder">
+          <div class="photo-upload-icon">📷</div>
+          <div class="photo-upload-text">사진을 탭하여 업로드</div>
+          <div class="photo-upload-sub">카메라 또는 갤러리에서 선택</div>
+        </div>
+        <img class="photo-preview" id="photo-preview" alt="현장 사진" />
+        <button class="photo-remove" id="photo-remove">✕</button>
+      </div>
+    </div>
+
+    <!-- 오늘 기록 -->
+    <div class="info-card today-log">
+      <div class="info-card-label">📋 오늘 기록</div>
+      <div class="log-row">
+        <span class="log-key">출근 시간</span>
+        <span class="log-val empty" id="log-checkin">미기록</span>
+      </div>
+      <div class="log-row">
+        <span class="log-key">퇴근 시간</span>
+        <span class="log-val empty" id="log-checkout">미기록</span>
+      </div>
+      <div class="log-row">
+        <span class="log-key">총 근무 시간</span>
+        <span class="log-val empty" id="log-duration">—</span>
+      </div>
+      <div class="log-row">
+        <span class="log-key">현장 사진</span>
+        <span class="log-val empty" id="log-photo">없음</span>
+      </div>
+    </div>
+  </main>
+
+  <!-- 토스트 -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+  (async () => {
+    'use strict';
+
+    // ── 인증 가드 ──────────────────────────────
+    const session = await AppCore.getSession();
+    if (!session) { window.location.replace('login.html'); return; }
+
+    const { data: profile, error: profileErr } = await AppCore.supabase
+      .from('users')
+      .select('role, name')
+      .eq('id', session.user.id)
+      .single();
+
+    if (profileErr || !profile || profile.role !== 'worker') {
+      await AppCore.supabase.auth.signOut();
+      window.location.replace('login.html');
+      return;
+    }
+
+    document.getElementById('user-name').textContent = profile.name || session.user.email;
+
+    // ── 상태 ──────────────────────────────────
+    let currentLat = null;
+    let currentLng = null;
+    let selectedFile = null;
+    let todayRecord = null; // DB에서 불러온 오늘 기록
+
+    // ── 시계 ──────────────────────────────────
+    const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+    function updateClock() {
+      const now = new Date();
+      const ymd = `${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 (${WEEKDAYS[now.getDay()]})`;
+      const hms = now.toLocaleTimeString('ko-KR', { hour12: false });
+      document.getElementById('clock-date').textContent = ymd;
+      document.getElementById('clock-time').textContent = hms;
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    // ── 토스트 ────────────────────────────────
+    function showToast(msg, type = 'info', duration = 3000) {
+      const container = document.getElementById('toast-container');
+      const el = document.createElement('div');
+      el.className = `toast ${type}`;
+      el.textContent = msg;
+      container.appendChild(el);
+      setTimeout(() => {
+        el.style.opacity = '0';
+        el.style.transition = 'opacity 0.3s';
+        setTimeout(() => el.remove(), 300);
+      }, duration);
+    }
+
+    // ── GPS ───────────────────────────────────
+    function getGPS() {
+      return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+          reject(new Error('GPS가 지원되지 않는 브라우저입니다.'));
+          return;
+        }
+        const statusEl = document.getElementById('gps-status');
+        statusEl.textContent = '위치 확인 중...';
+        statusEl.className = 'gps-status';
+
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            currentLat = pos.coords.latitude.toFixed(6);
+            currentLng = pos.coords.longitude.toFixed(6);
+            document.getElementById('gps-lat').textContent = `위도: ${currentLat}`;
+            document.getElementById('gps-lng').textContent = `경도: ${currentLng}`;
+            statusEl.textContent = `정확도: ±${Math.round(pos.coords.accuracy)}m`;
+            statusEl.className = 'gps-status ok';
+            resolve({ lat: currentLat, lng: currentLng });
+          },
+          (err) => {
+            const msgs = {
+              1: '위치 권한이 거부되었습니다. 설정에서 허용해주세요.',
+              2: '위치 정보를 가져올 수 없습니다.',
+              3: '위치 요청 시간이 초과되었습니다.',
+            };
+            const msg = msgs[err.code] || '위치를 가져오는데 실패했습니다.';
+            document.getElementById('gps-status').textContent = msg;
+            document.getElementById('gps-status').className = 'gps-status err';
+            reject(new Error(msg));
+          },
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
+        );
+      });
+    }
+
+    document.getElementById('btn-get-gps').addEventListener('click', async () => {
+      try { await getGPS(); showToast('위치가 업데이트되었습니다.', 'success'); }
+      catch (e) { showToast(e.message, 'error'); }
+    });
+
+    // 페이지 로드 시 GPS 자동 수집
+    getGPS().catch(() => {});
+
+    // ── 사진 ──────────────────────────────────
+    const photoArea    = document.getElementById('photo-upload-area');
+    const photoInput   = document.getElementById('photo-input');
+    const photoPreview = document.getElementById('photo-preview');
+    const photoRemove  = document.getElementById('photo-remove');
+
+    photoArea.addEventListener('click', (e) => {
+      if (e.target === photoRemove) return;
+      photoInput.click();
+    });
+
+    photoInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      if (file.size > 10 * 1024 * 1024) {
+        showToast('10MB 이하 파일만 업로드 가능합니다.', 'error');
+        return;
+      }
+      selectedFile = file;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        photoPreview.src = ev.target.result;
+        photoArea.classList.add('has-photo');
+      };
+      reader.readAsDataURL(file);
+    });
+
+    photoRemove.addEventListener('click', (e) => {
+      e.stopPropagation();
+      selectedFile = null;
+      photoInput.value = '';
+      photoArea.classList.remove('has-photo');
+      photoPreview.src = '';
+    });
+
+    // ── 사진 Storage 업로드 ────────────────────
+    async function uploadPhoto(file, userId, type) {
+      const ext  = file.name.split('.').pop() || 'jpg';
+      const date = new Date().toISOString().slice(0, 10);
+      const path = `attendance/${userId}/${date}_${type}_${Date.now()}.${ext}`;
+
+      const { data, error } = await AppCore.supabase.storage
+        .from('worksync-photos') // 버킷명은 실제 환경에 맞게 수정
+        .upload(path, file, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: file.type,
+        });
+
+      if (error) throw new Error(`사진 업로드 실패: ${error.message}`);
+
+      const { data: urlData } = AppCore.supabase.storage
+        .from('worksync-photos')
+        .getPublicUrl(data.path);
+
+      return urlData.publicUrl;
+    }
+
+    // ── 오늘 기록 불러오기 ────────────────────
+    async function loadTodayRecord() {
+      const today = new Date().toISOString().slice(0, 10);
+      const { data, error } = await AppCore.supabase
+        .from('attendance')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .eq('work_date', today)
+        .maybeSingle();
+
+      if (error) {
+        console.error('[worker] loadTodayRecord error:', error);
+        return;
+      }
+      todayRecord = data;
+      renderTodayRecord();
+      renderCheckinButton();
+    }
+
+    function fmtTime(isoStr) {
+      if (!isoStr) return null;
+      return new Date(isoStr).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: true });
+    }
+
+    function calcDuration(inTime, outTime) {
+      if (!inTime || !outTime) return null;
+      const diff = Math.floor((new Date(outTime) - new Date(inTime)) / 1000);
+      const h = Math.floor(diff / 3600);
+      const m = Math.floor((diff % 3600) / 60);
+      return `${h}시간 ${m}분`;
+    }
+
+    function renderTodayRecord() {
+      const ciEl  = document.getElementById('log-checkin');
+      const coEl  = document.getElementById('log-checkout');
+      const durEl = document.getElementById('log-duration');
+      const phEl  = document.getElementById('log-photo');
+
+      if (!todayRecord) {
+        [ciEl, coEl, durEl, phEl].forEach((el, i) => {
+          el.textContent = ['미기록', '미기록', '—', '없음'][i];
+          el.className = 'log-val empty';
+        });
+        return;
+      }
+
+      const ciTime  = fmtTime(todayRecord.check_in_at);
+      const coTime  = fmtTime(todayRecord.check_out_at);
+      const dur     = calcDuration(todayRecord.check_in_at, todayRecord.check_out_at);
+
+      ciEl.textContent  = ciTime  || '미기록';
+      ciEl.className    = ciTime  ? 'log-val' : 'log-val empty';
+      coEl.textContent  = coTime  || '미기록';
+      coEl.className    = coTime  ? 'log-val' : 'log-val empty';
+      durEl.textContent = dur     || '—';
+      durEl.className   = dur     ? 'log-val' : 'log-val empty';
+      phEl.textContent  = todayRecord.photo_url ? '있음 ✓' : '없음';
+      phEl.className    = todayRecord.photo_url ? 'log-val' : 'log-val empty';
+    }
+
+    function renderCheckinButton() {
+      const btn   = document.getElementById('btn-checkin');
+      const icon  = document.getElementById('checkin-icon');
+      const label = document.getElementById('checkin-label');
+      const hint  = document.getElementById('checkin-hint');
+      const badge = document.getElementById('status-badge');
+      const btext = document.getElementById('status-text');
+
+      const isCheckedIn  = todayRecord && todayRecord.check_in_at && !todayRecord.check_out_at;
+      const isCompleted  = todayRecord && todayRecord.check_out_at;
+
+      if (isCompleted) {
+        btn.className  = 'btn-checkin check-in';
+        btn.disabled   = true;
+        icon.textContent  = '✅';
+        label.textContent = '근무 완료';
+        hint.textContent  = '오늘 근무가 완료되었습니다';
+        badge.className = 'status-badge off';
+        btext.textContent = '퇴근 완료';
+      } else if (isCheckedIn) {
+        btn.className  = 'btn-checkin check-out';
+        btn.disabled   = false;
+        icon.textContent  = '🔴';
+        label.textContent = '퇴근';
+        hint.textContent  = '버튼을 눌러 퇴근을 기록하세요';
+        badge.className = 'status-badge on';
+        btext.textContent = '근무 중';
+      } else {
+        btn.className  = 'btn-checkin check-in';
+        btn.disabled   = false;
+        icon.textContent  = '🟢';
+        label.textContent = '출근';
+        hint.textContent  = '버튼을 눌러 출근을 기록하세요';
+        badge.className = 'status-badge off';
+        btext.textContent = '퇴근 상태';
+      }
+    }
+
+    // ── 체크인/아웃 처리 ──────────────────────
+    document.getElementById('btn-checkin').addEventListener('click', async () => {
+      const btn = document.getElementById('btn-checkin');
+      btn.disabled = true;
+
+      try {
+        const isCheckedIn = todayRecord && todayRecord.check_in_at && !todayRecord.check_out_at;
+
+        // GPS 최신화
+        try { await getGPS(); } catch (e) { /* GPS 실패해도 진행 */ }
+
+        let photoUrl = null;
+        if (selectedFile) {
+          try {
+            showToast('사진 업로드 중...', 'info');
+            photoUrl = await uploadPhoto(selectedFile, session.user.id, isCheckedIn ? 'out' : 'in');
+          } catch (e) {
+            console.warn('[worker] photo upload failed:', e);
+            showToast('사진 업로드에 실패했지만 출퇴근은 기록됩니다.', 'error', 4000);
+          }
+        }
+
+        if (!isCheckedIn) {
+          // ── 출근 ──
+          const today = new Date().toISOString().slice(0, 10);
+          const { error } = await AppCore.supabase
+            .from('attendance')
+            .insert({
+              user_id:      session.user.id,
+              work_date:    today,
+              check_in_at:  new Date().toISOString(),
+              check_in_lat: currentLat,
+              check_in_lng: currentLng,
+              photo_url:    photoUrl,
+            });
+
+          if (error) throw new Error(error.message);
+          showToast('출근이 기록되었습니다! 🟢', 'success');
+        } else {
+          // ── 퇴근 ──
+          const updates = {
+            check_out_at:  new Date().toISOString(),
+            check_out_lat: currentLat,
+            check_out_lng: currentLng,
+          };
+          if (photoUrl) updates.photo_url = photoUrl;
+
+          const { error } = await AppCore.supabase
+            .from('attendance')
+            .update(updates)
+            .eq('id', todayRecord.id);
+
+          if (error) throw new Error(error.message);
+          showToast('퇴근이 기록되었습니다! 수고하셨습니다 👋', 'success', 4000);
+        }
+
+        // 선택된 사진 초기화
+        selectedFile = null;
+        photoInput.value = '';
+        photoArea.classList.remove('has-photo');
+        photoPreview.src = '';
+
+        await loadTodayRecord();
+      } catch (e) {
+        console.error('[worker] checkin error:', e);
+        showToast(`기록에 실패했습니다: ${e.message}`, 'error', 4000);
+        btn.disabled = false;
+      }
+    });
+
+    // ── 로그아웃 ──────────────────────────────
+    document.getElementById('btn-logout').addEventListener('click', async () => {
+      if (!confirm('로그아웃 하시겠습니까?')) return;
+      await AppCore.supabase.auth.signOut();
+      window.location.replace('login.html');
+    });
+
+    // ── 초기화 ────────────────────────────────
+    await loadTodayRecord();
+
+  })();
+  </script>
+</body>
+</html>
