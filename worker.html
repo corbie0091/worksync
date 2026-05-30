@@ -627,24 +627,19 @@
 
     // ── 사진 Storage 업로드 ────────────────────
     async function uploadPhoto(file, userId, type) {
-  const ext = 'jpg';
   const date = new Date().toISOString().slice(0, 10);
-  const path = `attendance/${userId}/${date}_${type}_${Date.now()}.${ext}`;
-  // 업로드 전 리사이즈 (최대 1200px, 품질 0.75)
-let uploadFile = file;
-try {
-  const resized = await AppCore.resizeImage(file, 600, 0.4);
-  console.log('원본:', file.size, file.type);
-  console.log('리사이즈:', resized.size, resized.type);
-  
-  // Blob을 직접 사용 (File 객체 생성 안함)
-  uploadFile = resized;
-  console.log('업로드할 파일:', uploadFile.size, uploadFile.type);
-  uploadFile = new File([resized], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' });
-} catch (e) {
-  console.warn('[worker] 리사이즈 실패, 원본 사용:', e);
-}
-  console.log('실제 업로드 파일 크기:', uploadFile.size, uploadFile.type);
+  const path = `attendance/${userId}/${date}_${type}_${Date.now()}.jpg`;
+
+  let uploadFile;
+  try {
+    const resized = await AppCore.resizeImage(file, 600, 0.4);
+    uploadFile = resized;
+    console.log('원본:', file.size, file.type, '→ 리사이즈:', uploadFile.size);
+  } catch (e) {
+    console.warn('[worker] 리사이즈 실패, 원본 사용:', e);
+    uploadFile = file;
+  }
+
   const { data, error } = await AppCore.supabase.storage
     .from('worksync-photos')
     .upload(path, uploadFile, {
