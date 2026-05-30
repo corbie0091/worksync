@@ -14,6 +14,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
   <style>
     body {
       min-height: 100dvh;
@@ -451,7 +452,7 @@
     <div class="info-card">
       <div class="info-card-label">📷 현장 사진 (선택)</div>
       <div class="photo-upload-area" id="photo-upload-area">
-        <input type="file" id="photo-input" accept="image/*" capture="environment" />
+        <input type="file" id="photo-input" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" capture="environment" />
         <div class="photo-placeholder">
           <div class="photo-upload-icon">📷</div>
          <div class="photo-upload-text">사진 필수 📷</div>

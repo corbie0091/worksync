@@ -182,15 +182,28 @@
    * @param {number} quality - JPEG 품질 (기본 0.82)
    * @returns {Promise<Blob>}
    */
-  function resizeImage(file, maxPx = 800, quality = 0.5) {
+  async function resizeImage(file, maxPx = 800, quality = 0.5) {
+    // HEIC/HEIF 변환
+    let processFile = file;
+    if (file.type === 'image/heic' || file.type === 'image/heif' ||
+        file.name.toLowerCase().endsWith('.heic') || file.name.toLowerCase().endsWith('.heif')) {
+      try {
+        console.log('[resizeImage] HEIC 변환 중...');
+        const blob = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.8 });
+        processFile = new File([blob], file.name.replace(/\.heic$/i, '.jpg'), { type: 'image/jpeg' });
+        console.log('[resizeImage] HEIC 변환 완료:', processFile.size);
+      } catch (e) {
+        console.warn('[resizeImage] HEIC 변환 실패:', e);
+      }
+    }
+
     return new Promise((resolve, reject) => {
       const img = new Image();
-      const url = URL.createObjectURL(file);
+      const url = URL.createObjectURL(processFile);
       img.onload = () => {
         URL.revokeObjectURL(url);
         let { width, height } = img;
 
-        // 리사이즈 계산
         if (width > maxPx || height > maxPx) {
           if (width >= height) {
             height = Math.round(height * maxPx / width);
@@ -205,13 +218,10 @@
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d');
-
-        // 흰 배경 (PNG 투명 처리)
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, width, height);
         ctx.drawImage(img, 0, 0, width, height);
 
-        // 무조건 JPEG로 변환
         canvas.toBlob(
           (blob) => {
             if (blob) {
@@ -227,7 +237,8 @@
       };
       img.onerror = () => {
         URL.revokeObjectURL(url);
-        reject(new Error('이미지 로드에 실패했습니다.'));
+        console.warn('[resizeImage] canvas 로드 실패, 원본 사용');
+        resolve(processFile);
       };
       img.src = url;
     });
