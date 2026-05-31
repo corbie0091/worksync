@@ -608,6 +608,7 @@
 
       // 디버그 토스트
       showToast('1. 파일 선택됨', 'info', 2000);
+alert('파일선택: ' + file.type + ' / ' + Math.round(file.size/1024) + 'KB');
       console.log('type =', file.type);
       console.log('name =', file.name);
       console.log('size =', file.size);
@@ -675,7 +676,7 @@
       photoPreview.src = URL.createObjectURL(selectedFile);
       photoArea.classList.add('has-photo');
     });
-    
+
     // ── 사진 Storage 업로드 ────────────────────
     async function uploadPhoto(file, userId, type) {
   console.log('[uploadPhoto]', {
