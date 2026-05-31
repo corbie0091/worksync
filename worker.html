@@ -15,7 +15,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
   <script src="js/image-compression.min.js"></script>
   <link rel="stylesheet" href="css/style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+  <script src="js/heic2any.min.js"></script>
+  <script src="js/image-compression.min.js"></script>
   <style>
     body {
       min-height: 100dvh;
@@ -605,7 +606,37 @@
       const file = e.target.files[0];
       if (!file) return;
 
-      showToast(`원본: ${Math.round(file.size / 1024)}KB, 압축 중...`, 'info', 3000);
+      // 디버그 토스트
+      showToast('1. 파일 선택됨', 'info', 2000);
+      console.log('type =', file.type);
+      console.log('name =', file.name);
+      console.log('size =', file.size);
+
+      // HEIC 변환
+      let workingFile = file;
+      if (
+        file.type === 'image/heic' ||
+        file.type === 'image/heif' ||
+        file.name.toLowerCase().endsWith('.heic') ||
+        file.name.toLowerCase().endsWith('.heif')
+      ) {
+        try {
+          showToast('HEIC 변환 중...', 'info', 2000);
+          const jpgBlob = await heic2any({
+            blob: file,
+            toType: 'image/jpeg',
+            quality: 0.8,
+          });
+          workingFile = new File([jpgBlob], 'converted.jpg', { type: 'image/jpeg' });
+          showToast('HEIC 변환 완료', 'success', 2000);
+        } catch (err) {
+          console.error('[worker] HEIC 변환 실패:', err);
+          showToast('HEIC 변환 실패: ' + err.message, 'error', 3000);
+          return;
+        }
+      }
+
+      showToast('2. 압축 시작', 'info', 2000);
 
       try {
         const options = {
@@ -616,7 +647,8 @@
           initialQuality: 0.72,
         };
 
-        const compressed = await imageCompression(file, options);
+        const compressed = await imageCompression(workingFile, options);
+        showToast('3. 압축 완료', 'info', 2000);
 
         selectedFile = new File(
           [compressed],
@@ -625,25 +657,25 @@
         );
 
         showToast(
-          `압축완료: ${Math.round(file.size / 1024)}KB → ${Math.round(selectedFile.size / 1024)}KB`,
+          `완료: ${Math.round(file.size / 1024)}KB → ${Math.round(selectedFile.size / 1024)}KB`,
           'success',
-          3000
+          4000
         );
       } catch (err) {
-        console.error('[worker] 사진 압축 실패:', err);
+        console.error('[worker] 압축 실패:', err);
         selectedFile = null;
         photoInput.value = '';
-        showToast('사진 압축에 실패했습니다. 다시 촬영해주세요.', 'error', 4000);
+        showToast('압축 실패: ' + err.message, 'error', 4000);
         return;
       }
 
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        photoPreview.src = ev.target.result;
-        photoArea.classList.add('has-photo');
-      };
-      reader.readAsDataURL(selectedFile);
+      showToast('4. 미리보기 생성', 'info', 2000);
+
+      // FileReader 대신 URL.createObjectURL 사용 (Safari 메모리 절약)
+      photoPreview.src = URL.createObjectURL(selectedFile);
+      photoArea.classList.add('has-photo');
     });
+    
     // ── 사진 Storage 업로드 ────────────────────
     async function uploadPhoto(file, userId, type) {
   console.log('[uploadPhoto]', {
