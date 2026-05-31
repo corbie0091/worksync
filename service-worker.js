@@ -1,18 +1,17 @@
 /**
  * WorkSync Service Worker
- * 전략: Cache First (정적 자산) + Network First (API 요청)
- * iOS Safari PWA 완벽 대응
- */
+ * ?�략: Cache First (?�적 ?�산) + Network First (API ?�청)
+ * iOS Safari PWA ?�벽 ?�?? */
 
 'use strict';
 
-/* ── 버전 관리 ─────────────────────────────────────────────────────── */
-const APP_VERSION = 'v1.0.0';
+/* ?�?� 버전 관�??�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?� */
+const APP_VERSION = 'v~0,4dt:~4,2dt:~6,2dt:~8,4';
 const CACHE_STATIC  = `worksync-static-${APP_VERSION}`;
 const CACHE_DYNAMIC = `worksync-dynamic-${APP_VERSION}`;
 const CACHE_OFFLINE = `worksync-offline-${APP_VERSION}`;
 
-/* ── 사전 캐시할 정적 자산 목록 ─────────────────────────────────────── */
+/* ?�?� ?�전 캐시???�적 ?�산 목록 ?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?� */
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -26,14 +25,14 @@ const STATIC_ASSETS = [
   './icons/icon-512.png',
 ];
 
-/* ── 오프라인 fallback HTML ─────────────────────────────────────────── */
+/* ?�?� ?�프?�인 fallback HTML ?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?�?� */
 const OFFLINE_HTML = `<!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
   <meta name="theme-color" content="#0a0f1e"/>
-  <title>오프라인 — WorkSync</title>
+  <title>?�프?�인 ??WorkSync</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     body{
@@ -56,21 +55,21 @@ const OFFLINE_HTML = `<!DOCTYPE html>
   </style>
 </head>
 <body>
-  <div class="icon">📡</div>
-  <h1>오프라인 상태</h1>
-  <p>인터넷 연결을 확인하고 다시 시도해주세요.<br/>출퇴근 기록은 연결 후 정상 처리됩니다.</p>
-  <button onclick="location.reload()">다시 시도</button>
+  <div class="icon">?��</div>
+  <h1>?�프?�인 ?�태</h1>
+  <p>?�터???�결???�인?�고 ?�시 ?�도?�주?�요.<br/>출퇴�?기록?� ?�결 ???�상 처리?�니??</p>
+  <button onclick="location.reload()">?�시 ?�도</button>
 </body>
 </html>`;
 
-/* ══════════════════════════════════════════════════════════════════════
-   INSTALL — 정적 자산 사전 캐시
-══════════════════════════════════════════════════════════════════════ */
+/* ?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═
+   INSTALL ???�적 ?�산 ?�전 캐시
+?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═ */
 self.addEventListener('install', (event) => {
   console.info(`[SW ${APP_VERSION}] install`);
   event.waitUntil(
     (async () => {
-      /* 정적 캐시 */
+      /* ?�적 캐시 */
       const staticCache  = await caches.open(CACHE_STATIC);
       const offlineCache = await caches.open(CACHE_OFFLINE);
 
@@ -84,22 +83,22 @@ self.addEventListener('install', (event) => {
       try {
         await staticCache.addAll(STATIC_ASSETS);
       } catch (e) {
-        console.warn('[SW] 일부 정적 자산 캐싱 실패 (개발 환경에서는 정상):', e.message);
-        // 개발 환경에서 일부 아이콘이 없어도 SW 설치는 계속
+        console.warn('[SW] ?��? ?�적 ?�산 캐싱 ?�패 (개발 ?�경?�서???�상):', e.message);
+        // 개발 ?�경?�서 ?��? ?�이콘이 ?�어??SW ?�치??계속
         for (const url of STATIC_ASSETS) {
           try { await staticCache.add(url); } catch (_) {}
         }
       }
 
-      /* 즉시 활성화 (대기 없이) */
+      /* 즉시 ?�성??(?��??�이) */
       await self.skipWaiting();
     })()
   );
 });
 
-/* ══════════════════════════════════════════════════════════════════════
-   ACTIVATE — 구버전 캐시 정리
-══════════════════════════════════════════════════════════════════════ */
+/* ?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═
+   ACTIVATE ??구버??캐시 ?�리
+?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═ */
 self.addEventListener('activate', (event) => {
   console.info(`[SW ${APP_VERSION}] activate`);
   event.waitUntil(
@@ -111,59 +110,65 @@ self.addEventListener('activate', (event) => {
         allCaches
           .filter((name) => !validCaches.has(name) && name.startsWith('worksync-'))
           .map((name)  => {
-            console.info('[SW] 구버전 캐시 삭제:', name);
+            console.info('[SW] 구버??캐시 ??��:', name);
             return caches.delete(name);
           })
       );
 
-      /* 모든 클라이언트 즉시 제어 */
+      /* 모든 ?�라?�언??즉시 ?�어 */
       await self.clients.claim();
     })()
   );
 });
 
-/* ══════════════════════════════════════════════════════════════════════
-   FETCH — 요청 인터셉트 및 캐싱 전략
-══════════════════════════════════════════════════════════════════════ */
+/* ?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═
+   FETCH ???�청 ?�터?�트 �?캐싱 ?�략
+?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═ */
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  /* ── 1. non-GET 요청은 무조건 네트워크 통과 ── */
+  /* ?�?� 1. non-GET ?�청?� 무조�??�트?�크 ?�과 ?�?� */
   if (request.method !== 'GET') return;
 
-  /* ── 2. Chrome 확장 / blob / data URL 무시 ── */
+  /* ?�?� 2. Chrome ?�장 / blob / data URL 무시 ?�?� */
   if (!url.protocol.startsWith('http')) return;
 
-  /* ── 3. Supabase API → Network First + 오프라인 fallback ── */
+  /* ?�?� 3. Supabase API ??Network First + ?�프?�인 fallback ?�?� */
   if (url.hostname.endsWith('.supabase.co') || url.pathname.includes('/supabase/')) {
     event.respondWith(networkFirstStrategy(request));
     return;
   }
 
-  /* ── 4. Google Fonts → Stale While Revalidate ── */
+  /* ?�?� 4. Google Fonts ??Stale While Revalidate ?�?� */
   if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') {
     event.respondWith(staleWhileRevalidate(request, CACHE_DYNAMIC));
     return;
   }
 
-  /* ── 5. CDN 스크립트 (supabase-js 등) → Cache First ── */
+  /* ?�?� 5. CDN ?�크립트 (supabase-js ?? ??Cache First ?�?� */
   if (url.hostname === 'cdn.jsdelivr.net' || url.hostname.endsWith('.cdn.')) {
     event.respondWith(cacheFirstStrategy(request, CACHE_DYNAMIC));
     return;
   }
 
-  /* ── 6. 앱 정적 자산 → Cache First ── */
+    /* ?�?� 6. HTML ??Network First (??�� 최신 버전) ?�?� */
+  if (url.origin === self.location.origin && request.destination === 'document') {
+    event.respondWith(networkFirstStrategy(request));
+    return;
+  }
+
+  /* ?�?� 7. CSS/JS/?��?지 ??Cache First ?�?� */
   if (url.origin === self.location.origin) {
     event.respondWith(cacheFirstStrategy(request, CACHE_STATIC));
     return;
   }
 
-  /* ── 7. 나머지 → Network First ── */
+  /* ?�?� 7. ?�머지 ??Network First ?�?� */
   event.respondWith(networkFirstStrategy(request));
 });
 
-/* ── Cache First ── */
+/* ?�?� Cache First ?�?� */
 async function cacheFirstStrategy(request, cacheName) {
   const cache    = await caches.open(cacheName);
   const cached   = await cache.match(request);
@@ -180,7 +185,7 @@ async function cacheFirstStrategy(request, cacheName) {
   }
 }
 
-/* ── Network First ── */
+/* ?�?� Network First ?�?� */
 async function networkFirstStrategy(request) {
   try {
     const response = await fetch(request, { signal: AbortSignal.timeout(8000) });
@@ -197,7 +202,7 @@ async function networkFirstStrategy(request) {
   }
 }
 
-/* ── Stale While Revalidate ── */
+/* ?�?� Stale While Revalidate ?�?� */
 async function staleWhileRevalidate(request, cacheName) {
   const cache  = await caches.open(cacheName);
   const cached = await cache.match(request);
@@ -210,7 +215,7 @@ async function staleWhileRevalidate(request, cacheName) {
   return cached || fetchPromise || offlineFallback(request);
 }
 
-/* ── 오프라인 fallback ── */
+/* ?�?� ?�프?�인 fallback ?�?� */
 async function offlineFallback(request) {
   const url    = new URL(request.url);
   const isHTML = request.headers.get('accept')?.includes('text/html') ||
@@ -228,15 +233,15 @@ async function offlineFallback(request) {
     });
   }
 
-  return new Response(JSON.stringify({ error: 'offline', message: '오프라인 상태입니다.' }), {
+  return new Response(JSON.stringify({ error: 'offline', message: '?�프?�인 ?�태?�니??' }), {
     status: 503,
     headers: { 'Content-Type': 'application/json' },
   });
 }
 
-/* ══════════════════════════════════════════════════════════════════════
-   MESSAGE — 클라이언트 메시지 수신
-══════════════════════════════════════════════════════════════════════ */
+/* ?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═
+   MESSAGE ???�라?�언??메시지 ?�신
+?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═ */
 self.addEventListener('message', (event) => {
   if (!event.data) return;
 
@@ -262,9 +267,9 @@ self.addEventListener('message', (event) => {
   }
 });
 
-/* ══════════════════════════════════════════════════════════════════════
-   PUSH — 푸시 알림 (선택적, 서버에서 VAPID 키 필요)
-══════════════════════════════════════════════════════════════════════ */
+/* ?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═
+   PUSH ???�시 ?�림 (?�택?? ?�버?�서 VAPID ???�요)
+?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═?�═ */
 self.addEventListener('push', (event) => {
   if (!event.data) return;
 
@@ -304,4 +309,4 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
-console.info(`[WorkSync SW ${APP_VERSION}] 로드 완료`);
+console.info(`[WorkSync SW ${APP_VERSION}] 로드 ?�료`);
