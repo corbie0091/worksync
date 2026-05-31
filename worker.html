@@ -13,7 +13,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
-  <script src="js/image-compression.min.js"></script>
   <link rel="stylesheet" href="css/style.css" />
   <script src="js/heic2any.min.js"></script>
   <script src="js/image-compression.min.js"></script>
@@ -606,8 +605,6 @@
       const file = e.target.files[0];
       if (!file) return;
 
-      showToast(`원본: ${Math.round(file.size/1024)}KB 압축 중...`, 'info', 3000);
-
       let workingFile = file;
 
       // HEIC 변환
@@ -627,58 +624,29 @@
         }
       }
 
-      // 압축
-      // 압축
-try {
-  const options = {
-    maxSizeMB: 0.25,
-    maxWidthOrHeight: 1024,
-    useWebWorker: false,
-    fileType: 'image/jpeg',
-    initialQuality: 0.72,
-  };
-
-  console.log("원본", file.size);
-
-  const compressed = await imageCompression(
-    workingFile,
-    options
-  );
-
-  console.log("압축", compressed.size);
-
-  selectedFile = new File(
-    [compressed],
-    `photo_${Date.now()}.jpg`,
-    { type: 'image/jpeg' }
-  );
-
-  console.log("최종", selectedFile.size);
-
-  alert(
-    `원본:${Math.round(file.size/1024)}KB\n` +
-    `압축:${Math.round(compressed.size/1024)}KB`
-  );
-
-  showToast(
-    `압축완료: ${Math.round(file.size/1024)}KB → ${Math.round(selectedFile.size/1024)}KB`,
-    'success',
-    4000
-  );
-
-} catch (err) {
+      try {
+        const options = {
+          maxSizeMB: 0.25,
+          maxWidthOrHeight: 1024,
+          useWebWorker: false,
+          fileType: 'image/jpeg',
+          initialQuality: 0.72,
+        };
+        const compressed = await imageCompression(workingFile, options);
+        selectedFile = new File([compressed], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
+        showToast(`사진 준비 완료 ✓`, 'success', 2000);
+      } catch (err) {
         console.error('[worker] 압축 실패:', err);
-        showToast('사진 압축 실패. 다시 시도해주세요.', 'error', 4000);
+        showToast('사진 처리 실패. 다시 시도해주세요.', 'error', 4000);
         selectedFile = null;
         photoInput.value = '';
         return;
       }
 
-      // 미리보기 (URL.createObjectURL — Safari 메모리 절약)
-      alert('6 미리보기 생성');
       photoPreview.src = URL.createObjectURL(selectedFile);
       photoArea.classList.add('has-photo');
     });
+
     // ── 사진 Storage 업로드 ────────────────────
     async function uploadPhoto(file, userId, type) {
   console.log('[uploadPhoto]', {
