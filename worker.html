@@ -605,22 +605,36 @@
       const file = e.target.files[0];
       if (!file) return;
 
-      showToast('사진 압축 중...', 'info', 3000);
+      showToast(`원본: ${Math.round(file.size / 1024)}KB, 압축 중...`, 'info', 3000);
 
       try {
         const options = {
-          maxSizeMB: 0.3,
-          maxWidthOrHeight: 1280,
-          useWebWorker: true,
+          maxSizeMB: 0.25,
+          maxWidthOrHeight: 1024,
+          useWebWorker: false,
           fileType: 'image/jpeg',
+          initialQuality: 0.72,
         };
+
         const compressed = await imageCompression(file, options);
-        selectedFile = new File([compressed], 'photo.jpg', { type: 'image/jpeg' });
-        showToast(`압축완료: ${Math.round(selectedFile.size / 1024)}KB`, 'success', 3000);
+
+        selectedFile = new File(
+          [compressed],
+          `photo_${Date.now()}.jpg`,
+          { type: 'image/jpeg' }
+        );
+
+        showToast(
+          `압축완료: ${Math.round(file.size / 1024)}KB → ${Math.round(selectedFile.size / 1024)}KB`,
+          'success',
+          3000
+        );
       } catch (err) {
-        console.warn('[worker] 압축 실패, 원본 사용:', err);
-        selectedFile = file;
-        showToast('원본 사진으로 업로드됩니다.', 'info', 3000);
+        console.error('[worker] 사진 압축 실패:', err);
+        selectedFile = null;
+        photoInput.value = '';
+        showToast('사진 압축에 실패했습니다. 다시 촬영해주세요.', 'error', 4000);
+        return;
       }
 
       const reader = new FileReader();
@@ -630,9 +644,18 @@
       };
       reader.readAsDataURL(selectedFile);
     });
-
     // ── 사진 Storage 업로드 ────────────────────
     async function uploadPhoto(file, userId, type) {
+  console.log('[uploadPhoto]', {
+    name: file.name,
+    type: file.type,
+    sizeKB: Math.round(file.size / 1024),
+  });
+
+  if (file.size > 500 * 1024) {
+    throw new Error(`압축된 사진이 너무 큽니다: ${Math.round(file.size / 1024)}KB. 다시 촬영해주세요.`);
+  }
+
   const date = new Date().toISOString().slice(0, 10);
   const path = `attendance/${userId}/${date}_${type}_${Date.now()}.jpg`;
 
