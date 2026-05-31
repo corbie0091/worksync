@@ -606,14 +606,8 @@
       const file = e.target.files[0];
       if (!file) return;
 
-      // 디버그 토스트
-      showToast('1. 파일 선택됨', 'info', 2000);
-alert('파일선택: ' + file.type + ' / ' + Math.round(file.size/1024) + 'KB');
-      console.log('type =', file.type);
-      console.log('name =', file.name);
-      console.log('size =', file.size);
+      alert('1 파일선택: ' + file.type + ' ' + Math.round(file.size/1024) + 'KB');
 
-      // HEIC 변환
       let workingFile = file;
       if (
         file.type === 'image/heic' ||
@@ -622,22 +616,17 @@ alert('파일선택: ' + file.type + ' / ' + Math.round(file.size/1024) + 'KB');
         file.name.toLowerCase().endsWith('.heif')
       ) {
         try {
-          showToast('HEIC 변환 중...', 'info', 2000);
-          const jpgBlob = await heic2any({
-            blob: file,
-            toType: 'image/jpeg',
-            quality: 0.8,
-          });
+          alert('2 HEIC변환 시작');
+          const jpgBlob = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.8 });
           workingFile = new File([jpgBlob], 'converted.jpg', { type: 'image/jpeg' });
-          showToast('HEIC 변환 완료', 'success', 2000);
+          alert('3 HEIC변환 완료: ' + Math.round(workingFile.size/1024) + 'KB');
         } catch (err) {
-          console.error('[worker] HEIC 변환 실패:', err);
-          showToast('HEIC 변환 실패: ' + err.message, 'error', 3000);
+          alert('HEIC변환 실패: ' + err.message);
           return;
         }
       }
 
-      showToast('2. 압축 시작', 'info', 2000);
+      alert('4 압축 시작: ' + workingFile.type + ' ' + Math.round(workingFile.size/1024) + 'KB');
 
       try {
         const options = {
@@ -647,32 +636,18 @@ alert('파일선택: ' + file.type + ' / ' + Math.round(file.size/1024) + 'KB');
           fileType: 'image/jpeg',
           initialQuality: 0.72,
         };
-
         const compressed = await imageCompression(workingFile, options);
-        showToast('3. 압축 완료', 'info', 2000);
+        alert('5 압축완료: ' + Math.round(compressed.size/1024) + 'KB');
 
-        selectedFile = new File(
-          [compressed],
-          `photo_${Date.now()}.jpg`,
-          { type: 'image/jpeg' }
-        );
-
-        showToast(
-          `완료: ${Math.round(file.size / 1024)}KB → ${Math.round(selectedFile.size / 1024)}KB`,
-          'success',
-          4000
-        );
+        selectedFile = new File([compressed], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
       } catch (err) {
-        console.error('[worker] 압축 실패:', err);
+        alert('압축실패: ' + err.message);
         selectedFile = null;
         photoInput.value = '';
-        showToast('압축 실패: ' + err.message, 'error', 4000);
         return;
       }
 
-      showToast('4. 미리보기 생성', 'info', 2000);
-
-      // FileReader 대신 URL.createObjectURL 사용 (Safari 메모리 절약)
+      alert('6 미리보기 생성');
       photoPreview.src = URL.createObjectURL(selectedFile);
       photoArea.classList.add('has-photo');
     });
