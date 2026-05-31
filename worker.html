@@ -13,6 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
   <link rel="stylesheet" href="css/style.css" />
   <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
   <style>
@@ -600,35 +601,34 @@
       photoInput.click();
     });
 
-    photoInput.addEventListener('change', (e) => {
+    photoInput.addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
 
-      if (file.size > 30 * 1024 * 1024) {
-        showToast('30MB 이하 파일만 업로드 가능합니다.', 'error');
-        return;
+      showToast('사진 압축 중...', 'info', 3000);
+
+      try {
+        const options = {
+          maxSizeMB: 0.3,
+          maxWidthOrHeight: 1280,
+          useWebWorker: true,
+          fileType: 'image/jpeg',
+        };
+        const compressed = await imageCompression(file, options);
+        selectedFile = new File([compressed], 'photo.jpg', { type: 'image/jpeg' });
+        showToast(`압축완료: ${Math.round(selectedFile.size / 1024)}KB`, 'success', 3000);
+      } catch (err) {
+        console.warn('[worker] 압축 실패, 원본 사용:', err);
+        selectedFile = file;
+        showToast('원본 사진으로 업로드됩니다.', 'info', 3000);
       }
 
-      // 미리보기 먼저 표시
       const reader = new FileReader();
       reader.onload = (ev) => {
         photoPreview.src = ev.target.result;
         photoArea.classList.add('has-photo');
       };
-      reader.readAsDataURL(file);
-
-      // 리사이즈는 별도로
-      showToast('사진 압축 중...', 'info', 2000);
-      AppCore.resizeImage(file, 600, 0.4)
-        .then((resized) => {
-          selectedFile = new File([resized], 'photo.jpg', { type: 'image/jpeg' });
-          showToast(`압축완료: ${Math.round(selectedFile.size / 1024)}KB`, 'success', 3000);
-        })
-        .catch((err) => {
-          console.warn('[worker] 압축 실패:', err);
-          selectedFile = file;
-          showToast('원본 사진으로 업로드됩니다.', 'info', 3000);
-        });
+      reader.readAsDataURL(selectedFile);
     });
 
     // ── 사진 Storage 업로드 ────────────────────
@@ -636,19 +636,9 @@
   const date = new Date().toISOString().slice(0, 10);
   const path = `attendance/${userId}/${date}_${type}_${Date.now()}.jpg`;
 
-  let uploadFile;
-  try {
-    const resized = await AppCore.resizeImage(file, 600, 0.4);
-    uploadFile = resized;
-    console.log('원본:', file.size, file.type, '→ 리사이즈:', uploadFile.size);
-  } catch (e) {
-    console.warn('[worker] 리사이즈 실패, 원본 사용:', e);
-    uploadFile = file;
-  }
-
   const { data, error } = await AppCore.supabase.storage
     .from('worksync-photos')
-    .upload(path, uploadFile, {
+    .upload(path, file, {
       cacheControl: '3600',
       upsert: false,
       contentType: 'image/jpeg',
