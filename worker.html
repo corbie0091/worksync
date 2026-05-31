@@ -628,18 +628,45 @@
       }
 
       // 압축
-      try {
-        const options = {
-          maxSizeMB: 0.25,
-          maxWidthOrHeight: 1024,
-          useWebWorker: false,
-          fileType: 'image/jpeg',
-          initialQuality: 0.72,
-        };
-        const compressed = await imageCompression(workingFile, options);
-        selectedFile = new File([compressed], `photo_${Date.now()}.jpg`, { type: 'image/jpeg' });
-        showToast(`압축완료: ${Math.round(file.size/1024)}KB → ${Math.round(selectedFile.size/1024)}KB`, 'success', 4000);
-      } catch (err) {
+      // 압축
+try {
+  const options = {
+    maxSizeMB: 0.25,
+    maxWidthOrHeight: 1024,
+    useWebWorker: false,
+    fileType: 'image/jpeg',
+    initialQuality: 0.72,
+  };
+
+  console.log("원본", file.size);
+
+  const compressed = await imageCompression(
+    workingFile,
+    options
+  );
+
+  console.log("압축", compressed.size);
+
+  selectedFile = new File(
+    [compressed],
+    `photo_${Date.now()}.jpg`,
+    { type: 'image/jpeg' }
+  );
+
+  console.log("최종", selectedFile.size);
+
+  alert(
+    `원본:${Math.round(file.size/1024)}KB\n` +
+    `압축:${Math.round(compressed.size/1024)}KB`
+  );
+
+  showToast(
+    `압축완료: ${Math.round(file.size/1024)}KB → ${Math.round(selectedFile.size/1024)}KB`,
+    'success',
+    4000
+  );
+
+} catch (err) {
         console.error('[worker] 압축 실패:', err);
         showToast('사진 압축 실패. 다시 시도해주세요.', 'error', 4000);
         selectedFile = null;
@@ -648,15 +675,10 @@
       }
 
       // 미리보기 (URL.createObjectURL — Safari 메모리 절약)
-      photoPreview.src = URL.createObjectURL(selectedFile);
-      photoArea.classList.add('has-photo');
-    });
-
       alert('6 미리보기 생성');
       photoPreview.src = URL.createObjectURL(selectedFile);
       photoArea.classList.add('has-photo');
     });
-
     // ── 사진 Storage 업로드 ────────────────────
     async function uploadPhoto(file, userId, type) {
   console.log('[uploadPhoto]', {
